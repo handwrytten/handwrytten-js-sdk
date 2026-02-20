@@ -218,6 +218,17 @@ export class OrdersResource {
     }
     return items.map(parseOrder);
   }
+
+  /** List previously submitted baskets. */
+  async listPastBaskets(options?: { page?: number }): Promise<ApiRecord[]> {
+    const data = await this.http.get("orders/pastBaskets", {
+      page: options?.page ?? 1,
+    });
+    if (isRecord(data)) {
+      return (data.baskets ?? data.results ?? []) as ApiRecord[];
+    }
+    return Array.isArray(data) ? (data as ApiRecord[]) : [];
+  }
 }
 
 function isRecord(v: unknown): v is ApiRecord {

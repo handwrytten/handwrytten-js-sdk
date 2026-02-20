@@ -89,6 +89,26 @@ export function parseFont(data: ApiRecord): Font {
 }
 
 // ---------------------------------------------------------------------------
+// Denomination (gift card price point)
+// ---------------------------------------------------------------------------
+
+export interface Denomination {
+  id: number;
+  nominal: number;
+  price: number;
+  raw: ApiRecord;
+}
+
+export function parseDenomination(data: ApiRecord): Denomination {
+  return {
+    id: Number(data.id ?? 0),
+    nominal: Number(data.nominal ?? 0),
+    price: Number(data.price ?? 0),
+    raw: data,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Gift Card
 // ---------------------------------------------------------------------------
 
@@ -97,16 +117,22 @@ export interface GiftCard {
   title: string;
   amount?: number;
   imageUrl?: string;
+  denominations: Denomination[];
   raw: ApiRecord;
 }
 
 export function parseGiftCard(data: ApiRecord): GiftCard {
+  const denomsRaw = data.denominations;
+  const denominations = Array.isArray(denomsRaw)
+    ? (denomsRaw as ApiRecord[]).map(parseDenomination)
+    : [];
   return {
     id: String(data.id ?? ""),
     title: (data.title as string) ?? (data.name as string) ?? "",
     amount:
       data.amount != null ? Number(data.amount) : data.value != null ? Number(data.value) : undefined,
     imageUrl: (data.image_url as string) || (data.image as string) || undefined,
+    denominations,
     raw: data,
   };
 }
@@ -277,6 +303,24 @@ export function parseSavedAddress(data: ApiRecord): SavedAddress {
     state: (data.state as string) || (data.states as string) || undefined,
     zip: data.zip != null ? String(data.zip) : undefined,
     country: (data.country as string) ?? undefined,
+    raw: data,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Signature
+// ---------------------------------------------------------------------------
+
+export interface Signature {
+  id: number;
+  preview?: string;
+  raw: ApiRecord;
+}
+
+export function parseSignature(data: ApiRecord): Signature {
+  return {
+    id: Number(data.id ?? 0),
+    preview: (data.preview as string) ?? undefined,
     raw: data,
   };
 }

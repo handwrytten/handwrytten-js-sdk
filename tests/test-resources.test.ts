@@ -27,6 +27,22 @@ describe("AuthResource", () => {
     expect(calls[0].parsedBody).toEqual({ login: "a@b.com", password: "pass" });
     expect(result).toEqual({ uid: "abc" });
   });
+
+  it("listSignatures returns Signature[]", async () => {
+    const { client } = makeClient([{
+      body: { signatures: [{ id: 1, preview: "https://x.com/sig.png" }, { id: 2 }] },
+    }]);
+    const sigs = await client.auth.listSignatures();
+    expect(sigs).toHaveLength(2);
+    expect(sigs[0].id).toBe(1);
+    expect(sigs[0].preview).toBe("https://x.com/sig.png");
+  });
+
+  it("listSignatures handles list response", async () => {
+    const { client } = makeClient([{ body: [{ id: 1, preview: "x" }] }]);
+    const sigs = await client.auth.listSignatures();
+    expect(sigs).toHaveLength(1);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -93,6 +109,25 @@ describe("GiftCardsResource", () => {
     expect(gcs).toHaveLength(1);
     expect(gcs[0].amount).toBe(25);
   });
+
+  it("list extracts from gcards key", async () => {
+    const { client } = makeClient([{
+      body: {
+        gcards: [{
+          id: 1,
+          title: "Amazon",
+          denominations: [
+            { id: 10, nominal: 25, price: 27.5 },
+            { id: 11, nominal: 50, price: 55 },
+          ],
+        }],
+      },
+    }]);
+    const gcs = await client.giftCards.list();
+    expect(gcs).toHaveLength(1);
+    expect(gcs[0].denominations).toHaveLength(2);
+    expect(gcs[0].denominations[0].nominal).toBe(25);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -105,6 +140,18 @@ describe("InsertsResource", () => {
     const inserts = await client.inserts.list();
     expect(inserts).toHaveLength(1);
     expect(inserts[0].title).toBe("Flyer");
+  });
+
+  it("list extracts from inserts key", async () => {
+    const { client } = makeClient([{ body: { inserts: [{ id: 1, title: "Flyer" }] } }]);
+    const inserts = await client.inserts.list();
+    expect(inserts).toHaveLength(1);
+  });
+
+  it("list passes includeHistorical", async () => {
+    const { client, calls } = makeClient([{ body: [] }]);
+    await client.inserts.list({ includeHistorical: true });
+    expect(calls[0].url).toContain("include_historical=1");
   });
 });
 
@@ -210,6 +257,32 @@ describe("AddressBookResource", () => {
     expect(calls[0].url).toContain("profile/createAddress");
   });
 
+  it("deleteRecipient sends address_id", async () => {
+    const { client, calls } = makeClient([{ body: { status: "ok" } }]);
+    await client.addressBook.deleteRecipient({ addressId: 123 });
+    expect(calls[0].parsedBody).toMatchObject({ address_id: 123 });
+    expect(calls[0].url).toContain("profile/deleteRecipient");
+  });
+
+  it("deleteRecipient sends address_ids", async () => {
+    const { client, calls } = makeClient([{ body: { status: "ok" } }]);
+    await client.addressBook.deleteRecipient({ addressIds: [1, 2, 3] });
+    expect(calls[0].parsedBody).toMatchObject({ address_ids: [1, 2, 3] });
+  });
+
+  it("deleteSender sends address_id", async () => {
+    const { client, calls } = makeClient([{ body: { status: "ok" } }]);
+    await client.addressBook.deleteSender({ addressId: 456 });
+    expect(calls[0].parsedBody).toMatchObject({ address_id: 456 });
+    expect(calls[0].url).toContain("profile/deleteAddress");
+  });
+
+  it("deleteSender sends address_ids", async () => {
+    const { client, calls } = makeClient([{ body: { status: "ok" } }]);
+    await client.addressBook.deleteSender({ addressIds: [7, 8, 9] });
+    expect(calls[0].parsedBody).toMatchObject({ address_ids: [7, 8, 9] });
+  });
+
   it("countries returns Country[]", async () => {
     const { client } = makeClient([{ body: [{ code: "US", name: "United States" }] }]);
     const countries = await client.addressBook.countries();
@@ -295,6 +368,15 @@ describe("CustomCardsResource", () => {
       header_type: "text",
       header_text: "ACME Corp",
     });
+  });
+
+  it("get returns a CustomCard", async () => {
+    const { client, calls } = makeClient([{ body: { card_id: 999, category_id: 5 } }]);
+    const card = await client.customCards.get(999);
+    expect(card.cardId).toBe(999);
+    expect(card.categoryId).toBe(5);
+    expect(calls[0].url).toContain("design/getCustomCard");
+    expect(calls[0].url).toContain("id=999");
   });
 
   it("delete sends card id", async () => {
@@ -550,6 +632,21 @@ describe("OrdersResource", () => {
     expect(orders).toHaveLength(2);
     expect(calls[0].url).toContain("page=2");
     expect(calls[0].url).toContain("per_page=10");
+  });
+
+  it("listPastBaskets returns baskets", async () => {
+    const { client } = makeClient([{
+      body: { baskets: [{ id: 1, total: 5.99 }, { id: 2, total: 3.5 }] },
+    }]);
+    const baskets = await client.orders.listPastBaskets();
+    expect(baskets).toHaveLength(2);
+    expect(baskets[0].total).toBe(5.99);
+  });
+
+  it("listPastBaskets passes page", async () => {
+    const { client, calls } = makeClient([{ body: { baskets: [] } }]);
+    await client.orders.listPastBaskets({ page: 3 });
+    expect(calls[0].url).toContain("page=3");
   });
 });
 

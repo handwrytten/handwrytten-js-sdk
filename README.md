@@ -261,6 +261,9 @@ for (const img of images) {
 const covers = await client.customCards.listImages("cover");
 const logos = await client.customCards.listImages("logo");
 
+// Get details of a custom card
+const cardDetail = await client.customCards.get(456);
+
 // Delete an image
 await client.customCards.deleteImage(123);
 
@@ -289,8 +292,36 @@ const customizerFonts = await client.fonts.listForCustomizer();
 ### Gift Cards and Inserts
 
 ```typescript
+// List gift cards with their denominations (price points)
 const giftCards = await client.giftCards.list();
+for (const gc of giftCards) {
+  console.log(`${gc.title}: ${gc.denominations.length} denominations`);
+  for (const d of gc.denominations) {
+    console.log(`  $${d.nominal} (price: $${d.price})`);
+  }
+}
+
+// Include a gift card denomination in an order
+await client.orders.send({
+  cardId: "12345",
+  font: "hwDavid",
+  message: "Enjoy!",
+  denominationId: giftCards[0].denominations[0].id,
+  recipient: { /* ... */ },
+});
+
+// List inserts (optionally include historical/discontinued)
 const inserts = await client.inserts.list();
+const allInserts = await client.inserts.list({ includeHistorical: true });
+
+// Include an insert in an order
+await client.orders.send({
+  cardId: "12345",
+  font: "hwDavid",
+  message: "Hello!",
+  insertId: Number(inserts[0].id),
+  recipient: { /* ... */ },
+});
 ```
 
 ### QR Codes
@@ -369,9 +400,27 @@ await client.addressBook.updateRecipient({
 const senders = await client.addressBook.listSenders();
 const recipients = await client.addressBook.listRecipients();
 
+// Delete addresses
+await client.addressBook.deleteRecipient({ addressId: recipientId });
+await client.addressBook.deleteSender({ addressId: senderId });
+
+// Batch delete
+await client.addressBook.deleteRecipient({ addressIds: [1, 2, 3] });
+
 // Countries and states
 const countries = await client.addressBook.countries();
 const states = await client.addressBook.states("US");
+```
+
+### Signatures
+
+List the user's saved handwriting signatures for use in orders.
+
+```typescript
+const signatures = await client.auth.listSignatures();
+for (const sig of signatures) {
+  console.log(`  [${sig.id}] preview=${sig.preview}`);
+}
 ```
 
 ### Two-Step Basket Workflow
@@ -407,6 +456,9 @@ const n = await client.basket.count();       // number of items
 // Remove a specific item or clear everything
 await client.basket.remove(9517);
 await client.basket.clear();
+
+// List previously submitted baskets
+const pastBaskets = await client.orders.listPastBaskets({ page: 1 });
 ```
 
 ### Error Handling
@@ -439,15 +491,15 @@ try {
 
 | Resource | Methods |
 |---|---|
-| `client.auth` | `getUser()`, `login()` |
+| `client.auth` | `getUser()`, `login()`, `listSignatures()` |
 | `client.cards` | `list()`, `get(id)`, `categories()` |
-| `client.customCards` | `dimensions()`, `uploadImage()`, `checkImage()`, `listImages()`, `deleteImage()`, `create()`, `delete()` |
+| `client.customCards` | `dimensions()`, `uploadImage()`, `checkImage()`, `listImages()`, `deleteImage()`, `create()`, `get()`, `delete()` |
 | `client.fonts` | `list()`, `listForCustomizer()` |
 | `client.giftCards` | `list()` |
-| `client.inserts` | `list()` |
+| `client.inserts` | `list({ includeHistorical })` |
 | `client.qrCodes` | `list()`, `create()`, `delete()`, `frames()` |
-| `client.addressBook` | `listRecipients()`, `addRecipient()`, `updateRecipient()`, `listSenders()`, `addSender()`, `countries()`, `states(country)` |
-| `client.orders` | `send()`, `get(id)`, `list()` |
+| `client.addressBook` | `listRecipients()`, `addRecipient()`, `updateRecipient()`, `deleteRecipient()`, `listSenders()`, `addSender()`, `deleteSender()`, `countries()`, `states(country)` |
+| `client.orders` | `send()`, `get(id)`, `list()`, `listPastBaskets()` |
 | `client.basket` | `addOrder()`, `send()`, `remove(basketId)`, `clear()`, `list()`, `getItem(basketId)`, `count()` |
 | `client.prospecting` | `calculateTargets({ zipCode, radiusMiles })` |
 
