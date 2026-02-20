@@ -277,6 +277,12 @@ export class CustomCardsResource {
     return parseCustomCard(isRecord(data) ? data : {});
   }
 
+  /** Get details of a custom card. */
+  async get(cardId: number): Promise<CustomCard> {
+    const data = await this.http.get("design/getCustomCard", { id: cardId });
+    return parseCustomCard(isRecord(data) ? data : {});
+  }
+
   /** Delete a custom card. */
   async delete(cardId: number): Promise<ApiRecord> {
     return (await this.http.post("design/delete", { id: cardId })) as ApiRecord;

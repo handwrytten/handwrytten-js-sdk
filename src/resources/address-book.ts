@@ -125,6 +125,21 @@ export class AddressBookResource {
     return options.addressId;
   }
 
+  /**
+   * Delete one or more saved recipient addresses.
+   *
+   * Provide **one** of `addressId` (single) or `addressIds` (batch).
+   */
+  async deleteRecipient(options: {
+    addressId?: number;
+    addressIds?: number[];
+  }): Promise<ApiRecord> {
+    const body: ApiRecord = {};
+    if (options.addressId != null) body.address_id = options.addressId;
+    if (options.addressIds != null) body.address_ids = options.addressIds;
+    return (await this.http.post("profile/deleteRecipient", body)) as ApiRecord;
+  }
+
   // -- Senders -------------------------------------------------------------
 
   /** List saved sender (return) addresses. */
@@ -164,6 +179,21 @@ export class AddressBookResource {
       return Number(addr.id ?? addr.address_id ?? 0);
     }
     return 0;
+  }
+
+  /**
+   * Delete one or more saved sender (return) addresses.
+   *
+   * Provide **one** of `addressId` (single) or `addressIds` (batch).
+   */
+  async deleteSender(options: {
+    addressId?: number;
+    addressIds?: number[];
+  }): Promise<ApiRecord> {
+    const body: ApiRecord = {};
+    if (options.addressId != null) body.address_id = options.addressId;
+    if (options.addressIds != null) body.address_ids = options.addressIds;
+    return (await this.http.post("profile/deleteAddress", body)) as ApiRecord;
   }
 
   // -- Countries & States --------------------------------------------------

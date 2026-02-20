@@ -1,8 +1,8 @@
 /** Authentication and user profile endpoints. */
 
 import type { HttpClient } from "../http-client.js";
-import type { ApiRecord, User } from "../models.js";
-import { parseUser } from "../models.js";
+import type { ApiRecord, Signature, User } from "../models.js";
+import { parseSignature, parseUser } from "../models.js";
 
 export class AuthResource {
   constructor(private readonly http: HttpClient) {}
@@ -23,6 +23,20 @@ export class AuthResource {
       login: email,
       password,
     })) as ApiRecord;
+  }
+
+  /** Get the user's saved handwriting signatures. */
+  async listSignatures(): Promise<Signature[]> {
+    const data = await this.http.get("profile/signatures");
+    let items: ApiRecord[];
+    if (isRecord(data)) {
+      items = (data.signatures ?? []) as ApiRecord[];
+    } else if (Array.isArray(data)) {
+      items = data as ApiRecord[];
+    } else {
+      items = [];
+    }
+    return items.map(parseSignature);
   }
 }
 

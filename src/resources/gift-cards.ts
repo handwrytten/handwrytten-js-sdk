@@ -7,13 +7,18 @@ import { parseGiftCard } from "../models.js";
 export class GiftCardsResource {
   constructor(private readonly http: HttpClient) {}
 
-  /** Get all available gift card products. */
+  /**
+   * Get all available gift card products.
+   *
+   * Each GiftCard includes a `denominations` array with available
+   * price points (id, nominal value, and price).
+   */
   async list(): Promise<GiftCard[]> {
     const data = await this.http.get("giftCards/list");
     const items = Array.isArray(data)
       ? (data as ApiRecord[])
       : isRecord(data)
-        ? ((data.results ?? []) as ApiRecord[])
+        ? ((data.gcards ?? data.results ?? []) as ApiRecord[])
         : [];
     return items.map(parseGiftCard);
   }

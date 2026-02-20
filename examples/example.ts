@@ -49,13 +49,33 @@ async function main() {
   console.log(`  ... ${customizerFonts.length} total customizer fonts`);
   console.log();
 
-  // 5. List gift cards
+  // 5. List gift cards with denominations
   console.log("--- Gift Cards ---");
   const giftCards = await client.giftCards.list();
   for (const gc of giftCards.slice(0, 5)) {
-    console.log(`  [${gc.id}] ${gc.title}`);
+    console.log(`  [${gc.id}] ${gc.title} (${gc.denominations.length} denominations)`);
+    for (const d of gc.denominations.slice(0, 3)) {
+      console.log(`       $${d.nominal} (price: $${d.price})`);
+    }
   }
   console.log(`  ... ${giftCards.length} total gift cards`);
+  console.log();
+
+  // 5b. List inserts (including historical)
+  console.log("--- Inserts ---");
+  const inserts = await client.inserts.list();
+  console.log(`  Active inserts: ${inserts.length}`);
+  const allInserts = await client.inserts.list({ includeHistorical: true });
+  console.log(`  All inserts (incl. historical): ${allInserts.length}`);
+  console.log();
+
+  // 5c. List signatures
+  console.log("--- Signatures ---");
+  const signatures = await client.auth.listSignatures();
+  for (const sig of signatures.slice(0, 5)) {
+    console.log(`  [${sig.id}] preview=${sig.preview ?? "N/A"}`);
+  }
+  console.log(`  ... ${signatures.length} total signatures`);
   console.log();
 
   // 6. List orders
@@ -97,6 +117,36 @@ async function main() {
   });
   console.log("  Order sent!");
   console.log();
+
+  // 7b. Send an order with a gift card denomination and an insert
+  if (giftCards.length > 0 && giftCards[0].denominations.length > 0 && inserts.length > 0) {
+    console.log("--- Send Order with Gift Card & Insert ---");
+    await client.orders.send({
+      cardId: cards[0].id,
+      font: fonts[0].id,
+      message: "Enjoy this gift!",
+      denominationId: giftCards[0].denominations[0].id,
+      insertId: Number(inserts[0].id),
+      sender: {
+        firstName: "David",
+        lastName: "Wachs",
+        street1: "3433 E Main Ave",
+        city: "Phoenix",
+        state: "AZ",
+        zip: "85018",
+      },
+      recipient: {
+        firstName: "Jane",
+        lastName: "Doe",
+        street1: "3433 E Main Ave",
+        city: "Phoenix",
+        state: "AZ",
+        zip: "85001",
+      },
+    });
+    console.log("  Order with gift card & insert sent!");
+    console.log();
+  }
 
   // 8. Send bulk — multiple recipients with per-recipient messages
   console.log("--- Send Bulk Order ---");
@@ -335,6 +385,10 @@ async function main() {
     qrCodeSizePercent: 100,
   });
   console.log(`    Custom card created: cardId=${customCard.cardId}`);
+
+  // Get details of the custom card we just created
+  const cardDetail = await client.customCards.get(customCard.cardId);
+  console.log(`    Custom card detail: cardId=${cardDetail.cardId}`);
   console.log();
 
   // 12. Send an order using the custom card
@@ -353,6 +407,23 @@ async function main() {
     },
   });
   console.log("  Custom card order sent!");
+  console.log();
+
+  // 13. List past baskets
+  console.log("--- Past Baskets ---");
+  const pastBaskets = await client.orders.listPastBaskets({ page: 1 });
+  console.log(`  Past baskets: ${pastBaskets.length}`);
+  for (const pb of pastBaskets.slice(0, 3)) {
+    console.log(`    ${JSON.stringify(pb)}`);
+  }
+  console.log();
+
+  // 14. Delete saved addresses
+  console.log("--- Delete Saved Addresses ---");
+  await client.addressBook.deleteRecipient({ addressId: recipientId });
+  console.log(`  Deleted recipient address: id=${recipientId}`);
+  await client.addressBook.deleteSender({ addressId: senderId });
+  console.log(`  Deleted sender address: id=${senderId}`);
   console.log();
 
   // Clean up: delete the custom card and images

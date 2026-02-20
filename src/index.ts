@@ -43,6 +43,7 @@ export type {
   Country,
   CustomCard,
   CustomImage,
+  Denomination,
   Dimension,
   Font,
   GiftCard,
@@ -52,6 +53,7 @@ export type {
   Recipient,
   SavedAddress,
   Sender,
+  Signature,
   State,
   User,
 } from "./models.js";
@@ -63,6 +65,7 @@ export {
   parseCountry,
   parseCustomCard,
   parseCustomImage,
+  parseDenomination,
   parseDimension,
   parseFont,
   parseGiftCard,
@@ -70,6 +73,7 @@ export {
   parseOrder,
   parseQRCode,
   parseSavedAddress,
+  parseSignature,
   parseState,
   parseUser,
 } from "./models.js";

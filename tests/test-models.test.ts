@@ -3,6 +3,7 @@ import {
   parseUser,
   parseCard,
   parseFont,
+  parseDenomination,
   parseGiftCard,
   parseInsert,
   parseQRCode,
@@ -11,6 +12,7 @@ import {
   parseCustomImage,
   parseCustomCard,
   parseSavedAddress,
+  parseSignature,
   parseCountry,
   parseState,
   ZoneType,
@@ -61,6 +63,22 @@ describe("parseFont", () => {
   });
 });
 
+describe("parseDenomination", () => {
+  it("parses denomination data", () => {
+    const d = parseDenomination({ id: 10, nominal: 25, price: 27.5 });
+    expect(d.id).toBe(10);
+    expect(d.nominal).toBe(25);
+    expect(d.price).toBe(27.5);
+  });
+
+  it("defaults to zeros", () => {
+    const d = parseDenomination({});
+    expect(d.id).toBe(0);
+    expect(d.nominal).toBe(0);
+    expect(d.price).toBe(0);
+  });
+});
+
 describe("parseGiftCard", () => {
   it("parses gift card data", () => {
     const gc = parseGiftCard({ id: 10, title: "Amazon", amount: 25 });
@@ -71,6 +89,30 @@ describe("parseGiftCard", () => {
 
   it("falls back to value for amount", () => {
     expect(parseGiftCard({ id: 1, title: "X", value: 50 }).amount).toBe(50);
+  });
+
+  it("parses denominations", () => {
+    const gc = parseGiftCard({
+      id: 5,
+      title: "Amazon",
+      denominations: [
+        { id: 1, nominal: 25, price: 27.5 },
+        { id: 2, nominal: 50, price: 55 },
+      ],
+    });
+    expect(gc.denominations).toHaveLength(2);
+    expect(gc.denominations[0].nominal).toBe(25);
+    expect(gc.denominations[1].price).toBe(55);
+  });
+
+  it("defaults to empty denominations", () => {
+    const gc = parseGiftCard({ id: 1, title: "X" });
+    expect(gc.denominations).toEqual([]);
+  });
+
+  it("ignores non-array denominations", () => {
+    const gc = parseGiftCard({ id: 1, title: "X", denominations: "invalid" });
+    expect(gc.denominations).toEqual([]);
   });
 });
 
@@ -179,6 +221,20 @@ describe("parseSavedAddress", () => {
     expect(addr.city).toBe("Phoenix");
     expect(addr.state).toBe("AZ");
     expect(addr.zip).toBe("85001");
+  });
+});
+
+describe("parseSignature", () => {
+  it("parses signature data", () => {
+    const s = parseSignature({ id: 7, preview: "https://x.com/sig.png" });
+    expect(s.id).toBe(7);
+    expect(s.preview).toBe("https://x.com/sig.png");
+  });
+
+  it("defaults", () => {
+    const s = parseSignature({});
+    expect(s.id).toBe(0);
+    expect(s.preview).toBeUndefined();
   });
 });
 
