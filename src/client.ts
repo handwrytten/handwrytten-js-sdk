@@ -48,8 +48,10 @@ import {
 } from "./resources/index.js";
 
 export interface HandwryttenOptions {
-  /** Your Handwrytten API key. */
-  apiKey: string;
+  /** Your Handwrytten API key (legacy auth). Provide either apiKey or accessToken. */
+  apiKey?: string;
+  /** OAuth2 access token (Bearer auth). Provide either apiKey or accessToken. */
+  accessToken?: string;
   /** Override the API base URL (default: production). */
   baseUrl?: string;
   /** Request timeout in milliseconds (default: 30 000). */
@@ -81,14 +83,15 @@ export class Handwrytten {
         ? { apiKey: apiKeyOrOptions }
         : apiKeyOrOptions;
 
-    if (!options.apiKey) {
+    if (!options.apiKey && !options.accessToken) {
       throw new Error(
-        "An API key is required. Get one at https://app.handwrytten.com/api-keys",
+        "An API key or access token is required. Get an API key at https://app.handwrytten.com/api-keys",
       );
     }
 
     this._http = new HttpClient({
       apiKey: options.apiKey,
+      accessToken: options.accessToken,
       baseUrl: options.baseUrl ?? DEFAULT_BASE_URL,
       timeout: options.timeout ?? DEFAULT_TIMEOUT,
       maxRetries: options.maxRetries ?? 3,

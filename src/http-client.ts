@@ -16,7 +16,10 @@ export const MAX_RETRIES = 3;
 const RETRY_BACKOFF = 1_000; // ms
 
 export interface HttpClientOptions {
-  apiKey: string;
+  /** Handwrytten API key (legacy auth). Provide either apiKey or accessToken. */
+  apiKey?: string;
+  /** OAuth2 access token (Bearer auth). Provide either apiKey or accessToken. */
+  accessToken?: string;
   baseUrl?: string;
   /** Request timeout in milliseconds. */
   timeout?: number;
@@ -26,7 +29,8 @@ export interface HttpClientOptions {
 }
 
 export class HttpClient {
-  readonly apiKey: string;
+  readonly apiKey: string | undefined;
+  readonly accessToken: string | undefined;
   readonly baseUrl: string;
   readonly timeout: number;
   readonly maxRetries: number;
@@ -34,6 +38,7 @@ export class HttpClient {
 
   constructor(options: HttpClientOptions) {
     this.apiKey = options.apiKey;
+    this.accessToken = options.accessToken;
     this.baseUrl = (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "") + "/";
     this.timeout = options.timeout ?? DEFAULT_TIMEOUT;
     this.maxRetries = options.maxRetries ?? MAX_RETRIES;
@@ -95,8 +100,8 @@ export class HttpClient {
 
     const headers: Record<string, string> = {
       Accept: "application/json",
-      Authorization: this.apiKey,
-      "User-Agent": "handwrytten-ts/1.1.0",
+      Authorization: this.accessToken ? `Bearer ${this.accessToken}` : this.apiKey!,
+      "User-Agent": "handwrytten-ts/1.3.0",
     };
 
     if (options.idempotencyKey) {
