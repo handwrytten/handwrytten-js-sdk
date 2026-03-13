@@ -18,6 +18,9 @@ const CAMEL_TO_API: Record<string, string> = {
 /**
  * Flatten a camelCase address object into `{prefix}_{field}` API fields.
  *
+ * Keys that already start with `return_` are passed through as-is
+ * (inline return-address fields like `return_first_name`).
+ *
  * @example
  * flattenAddress({ firstName: "Jane", city: "Phoenix" }, "to")
  * // => { to_first_name: "Jane", to_city: "Phoenix" }
@@ -29,8 +32,12 @@ export function flattenAddress(
   const result: Record<string, string> = {};
   for (const [key, value] of Object.entries(data)) {
     if (value == null) continue;
-    const apiSuffix = CAMEL_TO_API[key] ?? key;
-    result[`${prefix}_${apiSuffix}`] = String(value);
+    if (key.startsWith("return_")) {
+      result[key] = String(value);
+    } else {
+      const apiSuffix = CAMEL_TO_API[key] ?? key;
+      result[`${prefix}_${apiSuffix}`] = String(value);
+    }
   }
   return result;
 }
