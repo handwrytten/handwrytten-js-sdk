@@ -5,6 +5,16 @@ All notable changes to the Handwrytten TypeScript SDK will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-03-13
+
+### Added
+
+- **OAuth2 access token authentication** — the `Handwrytten` client now accepts an `accessToken` option as an alternative to `apiKey`. When used, the SDK sends `Authorization: Bearer {token}` headers, enabling OAuth2 workflows.
+  - `new Handwrytten({ accessToken: "oauth_token" })` — create a client using an OAuth2 access token
+  - `new Handwrytten("api_key")` — existing API key auth continues to work unchanged
+  - Both `apiKey` and `accessToken` are exported in the `HandwryttenOptions` type
+- Updated `User-Agent` string to `handwrytten-ts/1.3.0`
+
 ## [1.2.0] - 2026-02-20
 
 ### Added

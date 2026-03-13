@@ -503,13 +503,41 @@ try {
 | `client.basket` | `addOrder()`, `send()`, `remove(basketId)`, `clear()`, `list()`, `getItem(basketId)`, `count()` |
 | `client.prospecting` | `calculateTargets({ zipCode, radiusMiles })` |
 
+## Authentication
+
+The SDK supports two authentication methods:
+
+### API Key (legacy)
+
+Use an API key from [app.handwrytten.com/api-keys](https://app.handwrytten.com/api-keys):
+
+```typescript
+// Shorthand
+const client = new Handwrytten("your_api_key");
+
+// Or with options
+const client = new Handwrytten({ apiKey: "your_api_key" });
+```
+
+### OAuth2 Access Token
+
+Use an OAuth2 access token obtained through the Handwrytten OAuth2 authorization flow. This is the recommended approach for applications that authenticate users via OAuth (e.g., MCP servers, third-party integrations):
+
+```typescript
+const client = new Handwrytten({ accessToken: "oauth2_access_token" });
+```
+
+The SDK will send `Authorization: Bearer {token}` headers when using an access token.
+
+You must provide either `apiKey` or `accessToken` — at least one is required.
+
 ## Configuration
 
 ```typescript
 const client = new Handwrytten({
-  apiKey: "your_key",
-  timeout: 60_000,     // milliseconds (default: 30000)
-  maxRetries: 5,       // automatic retries with exponential backoff
+  apiKey: "your_key",       // or accessToken: "oauth_token"
+  timeout: 60_000,          // milliseconds (default: 30000)
+  maxRetries: 5,            // automatic retries with exponential backoff
 });
 ```
 
