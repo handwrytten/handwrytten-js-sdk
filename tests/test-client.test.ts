@@ -27,10 +27,10 @@ describe("Handwrytten client", () => {
   });
 
   it("throws on missing API key", () => {
-    expect(() => new Handwrytten({ apiKey: "" })).toThrow("API key is required");
+    expect(() => new Handwrytten({ apiKey: "" })).toThrow("An API key or access token is required");
   });
 
   it("string constructor throws on missing key", () => {
-    expect(() => new Handwrytten("")).toThrow("API key is required");
+    expect(() => new Handwrytten("")).toThrow("An API key or access token is required");
   });
 });
