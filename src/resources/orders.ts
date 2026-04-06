@@ -170,6 +170,8 @@ export class OrdersResource {
     };
     if (addresses.length > 0) placeOptions.addresses = addresses;
     if (addressIds.length > 0) placeOptions.addressIds = addressIds;
+    if (message != null) placeOptions.message = message;
+    if (wishes != null) placeOptions.wishes = wishes;
 
     if (senderId != null) placeOptions.returnAddressId = senderId;
     if (messageAlign != null) placeOptions.messageAlign = messageAlign;
