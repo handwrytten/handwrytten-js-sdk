@@ -110,13 +110,16 @@ export class OrdersResource {
     // -- Resolve recipients -----------------------------------------------
     const recipients = Array.isArray(recipient) ? recipient : [recipient];
     const addresses: ApiRecord[] = [];
+    const addressIds: number[] = [];
 
     for (const r of recipients) {
-      let row: ApiRecord = {};
-
       if (typeof r === "number") {
-        row.address_id = r;
+        // Numeric IDs must go via the top-level addressIds param so the API
+        // resolves the saved address. Embedding them inside `addresses` as
+        // {address_id} is not recognised and causes blank addresses.
+        addressIds.push(r);
       } else {
+        let row: ApiRecord = {};
         const rObj = { ...(r as ApiRecord) };
         const rowMessage = rObj.message;
         const rowWishes = rObj.wishes;
@@ -142,30 +145,31 @@ export class OrdersResource {
             Object.assign(row, flattenAddress(rowSender as ApiRecord, "from"));
           }
         }
+
+        // Apply defaults for message/wishes
+        if (!("message" in row) && message != null) row.message = message;
+        if (!("wishes" in row) && wishes != null) row.wishes = wishes;
+
+        // Apply default sender from_* fields
+        if (
+          defaultSenderFields &&
+          !Object.keys(row).some((k) => k.startsWith("from_")) &&
+          !("return_address_id" in row)
+        ) {
+          Object.assign(row, defaultSenderFields);
+        }
+
+        addresses.push(row);
       }
-
-      // Apply defaults for message/wishes
-      if (!("message" in row) && message != null) row.message = message;
-      if (!("wishes" in row) && wishes != null) row.wishes = wishes;
-
-      // Apply default sender from_* fields
-      if (
-        defaultSenderFields &&
-        !Object.keys(row).some((k) => k.startsWith("from_")) &&
-        !("return_address_id" in row)
-      ) {
-        Object.assign(row, defaultSenderFields);
-      }
-
-      addresses.push(row);
     }
 
     // Build placeBasket args
     const placeOptions: ApiRecord = {
       cardId,
       font,
-      addresses,
     };
+    if (addresses.length > 0) placeOptions.addresses = addresses;
+    if (addressIds.length > 0) placeOptions.addressIds = addressIds;
 
     if (senderId != null) placeOptions.returnAddressId = senderId;
     if (messageAlign != null) placeOptions.messageAlign = messageAlign;
