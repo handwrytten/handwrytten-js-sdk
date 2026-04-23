@@ -13,10 +13,12 @@ import {
   parseCustomCard,
   parseSavedAddress,
   parseSignature,
+  parseStampOption,
   parseCountry,
   parseState,
   ZoneType,
   QRCodeLocation,
+  DeliveryConfirmation,
 } from "../src/models.js";
 
 describe("parseUser", () => {
@@ -258,6 +260,32 @@ describe("parseState", () => {
   });
 });
 
+describe("parseStampOption", () => {
+  it("parses stamp option data", () => {
+    const s = parseStampOption({
+      id: 1,
+      name: "First Class",
+      description: "Standard first-class postage",
+      price: 0.73,
+    });
+    expect(s.id).toBe(1);
+    expect(s.name).toBe("First Class");
+    expect(s.description).toBe("Standard first-class postage");
+    expect(s.price).toBe(0.73);
+  });
+
+  it("falls back to title for name", () => {
+    expect(parseStampOption({ id: 2, title: "Presorted" }).name).toBe("Presorted");
+  });
+
+  it("defaults", () => {
+    const s = parseStampOption({});
+    expect(s.id).toBe(0);
+    expect(s.name).toBeUndefined();
+    expect(s.price).toBeUndefined();
+  });
+});
+
 describe("constants", () => {
   it("ZoneType values", () => {
     expect(ZoneType.TEXT).toBe("text");
@@ -269,5 +297,11 @@ describe("constants", () => {
     expect(QRCodeLocation.HEADER).toBe("header");
     expect(QRCodeLocation.FOOTER).toBe("footer");
     expect(QRCodeLocation.MAIN).toBe("main");
+  });
+
+  it("DeliveryConfirmation values", () => {
+    expect(DeliveryConfirmation.NONE).toBe(0);
+    expect(DeliveryConfirmation.DELIVERY_CONFIRMATION).toBe(1);
+    expect(DeliveryConfirmation.CASS_VALIDATION).toBe(2);
   });
 });

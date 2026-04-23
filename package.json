@@ -1,6 +1,6 @@
 {
   "name": "handwrytten",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Official TypeScript SDK for the Handwrytten API — send real handwritten notes at scale using robots with real pens.",
   "author": "Handwrytten",
   "license": "MIT",

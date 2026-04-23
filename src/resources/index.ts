@@ -15,4 +15,5 @@ export { OrdersResource } from "./orders.js";
 export type { RecipientInput, SenderInput, SendOrderOptions } from "./orders.js";
 export { ProspectingResource } from "./prospecting.js";
 export type { CalculateTargetsOptions } from "./prospecting.js";
+export { ShippingResource } from "./shipping.js";
 export { flattenAddress } from "./helpers.js";

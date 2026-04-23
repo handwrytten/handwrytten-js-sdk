@@ -1,7 +1,7 @@
 /** Create and manage handwritten note orders. */
 
 import type { HttpClient } from "../http-client.js";
-import type { ApiRecord, Order, Recipient, Sender } from "../models.js";
+import type { ApiRecord, DeliveryConfirmation, Order, Recipient, Sender } from "../models.js";
 import { parseOrder } from "../models.js";
 import type { BasketResource, SendBasketOptions } from "./basket.js";
 import { flattenAddress } from "./helpers.js";
@@ -33,7 +33,21 @@ export interface SendOrderOptions {
   couponCode?: string;
   dateSend?: string;
   checkCassBeforeSubmit?: boolean;
-  deliveryConfirmation?: boolean;
+  /**
+   * Delivery confirmation mode. Accepts:
+   * - `0` — none (default)
+   * - `1` — USPS delivery confirmation
+   * - `2` — CASS address validation only
+   *
+   * Use the {@link DeliveryConfirmation} constant for readability.
+   */
+  deliveryConfirmation?: DeliveryConfirmation | number;
+  /**
+   * Stamp option ID selecting first-class vs. presorted mail for US orders.
+   * Fetch available options via `client.shipping.stampOptions()`.
+   * Ignored for international orders.
+   */
+  stampOptionId?: number;
   clientMetadata?: string;
   suppressWarnings?: boolean;
   signatureId?: number;
@@ -64,10 +78,12 @@ export class OrdersResource {
    * - A plain object with camelCase keys (`firstName`, `street1`, etc.)
    * - A plain object already in `to_*` format
    * - A saved address ID (number)
-   * - An **array** of any of the above for bulk orders
+   * - An **array** of any of the above for bulk orders — must be either all
+   *   saved-address IDs or all inline address objects, not a mix
    *
-   * Each recipient object may include `message`, `wishes`, and `sender` keys
-   * for per-recipient overrides.
+   * Each inline recipient object may include `message`, `wishes`, and
+   * `sender` keys for per-recipient overrides. For saved-address IDs, the
+   * top-level `message`/`wishes` apply to every recipient.
    */
   async send(options: SendOrderOptions): Promise<ApiRecord> {
     const {
@@ -86,6 +102,7 @@ export class OrdersResource {
       dateSend,
       checkCassBeforeSubmit,
       deliveryConfirmation,
+      stampOptionId,
       clientMetadata,
       suppressWarnings,
       signatureId,
@@ -109,6 +126,17 @@ export class OrdersResource {
 
     // -- Resolve recipients -----------------------------------------------
     const recipients = Array.isArray(recipient) ? recipient : [recipient];
+
+    // Reject mixed arrays: either all saved-address IDs (numbers) or all
+    // inline address objects. placeBasket's behavior on mixed input is
+    // untested and has no real use case — callers should pick one form.
+    const numericCount = recipients.filter((r) => typeof r === "number").length;
+    if (numericCount > 0 && numericCount < recipients.length) {
+      throw new Error(
+        "recipient array must contain either all saved-address IDs (numbers) or all inline address objects — not a mix",
+      );
+    }
+
     const addresses: ApiRecord[] = [];
     const addressIds: number[] = [];
 
@@ -170,6 +198,11 @@ export class OrdersResource {
     };
     if (addresses.length > 0) placeOptions.addresses = addresses;
     if (addressIds.length > 0) placeOptions.addressIds = addressIds;
+    // placeBasket uses top-level message/wishes for address_ids rows, and
+    // each dict row's own message/wishes for inline addresses. Forwarding
+    // them unconditionally covers both cases.
+    if (message != null) placeOptions.message = message;
+    if (wishes != null) placeOptions.wishes = wishes;
 
     if (senderId != null) placeOptions.returnAddressId = senderId;
     if (messageAlign != null) placeOptions.messageAlign = messageAlign;
@@ -177,6 +210,7 @@ export class OrdersResource {
     if (insertId != null) placeOptions.insertId = insertId;
     if (dateSend != null) placeOptions.dateSend = dateSend;
     if (deliveryConfirmation != null) placeOptions.deliveryConfirmation = deliveryConfirmation;
+    if (stampOptionId != null) placeOptions.stampOptionId = stampOptionId;
     if (clientMetadata != null) placeOptions.clientMetadata = clientMetadata;
     if (suppressWarnings != null) placeOptions.suppressWarnings = suppressWarnings;
     if (signatureId != null) placeOptions.signatureId = signatureId;
