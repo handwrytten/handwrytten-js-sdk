@@ -45,6 +45,7 @@ import {
   OrdersResource,
   ProspectingResource,
   QRCodesResource,
+  ShippingResource,
 } from "./resources/index.js";
 
 export interface HandwryttenOptions {
@@ -76,6 +77,7 @@ export class Handwrytten {
   readonly basket: BasketResource;
   readonly orders: OrdersResource;
   readonly prospecting: ProspectingResource;
+  readonly shipping: ShippingResource;
 
   constructor(apiKeyOrOptions: string | HandwryttenOptions) {
     const options: HandwryttenOptions =
@@ -110,5 +112,6 @@ export class Handwrytten {
     this.basket = new BasketResource(this._http);
     this.orders = new OrdersResource(this._http, this.basket);
     this.prospecting = new ProspectingResource(this._http);
+    this.shipping = new ShippingResource(this._http);
   }
 }

@@ -386,6 +386,28 @@ export interface Sender {
 }
 
 // ---------------------------------------------------------------------------
+// Stamp Option
+// ---------------------------------------------------------------------------
+
+export interface StampOption {
+  id: number;
+  name?: string;
+  description?: string;
+  price?: number;
+  raw: ApiRecord;
+}
+
+export function parseStampOption(data: ApiRecord): StampOption {
+  return {
+    id: Number(data.id ?? 0),
+    name: (data.name as string) ?? (data.title as string) ?? undefined,
+    description: (data.description as string) ?? undefined,
+    price: data.price != null ? Number(data.price) : undefined,
+    raw: data,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
@@ -405,3 +427,17 @@ export const QRCodeLocation = {
   MAIN: "main",
 } as const;
 export type QRCodeLocation = (typeof QRCodeLocation)[keyof typeof QRCodeLocation];
+
+/**
+ * Delivery confirmation mode for orders.
+ *
+ * - `NONE` (0) — no delivery confirmation or address validation
+ * - `DELIVERY_CONFIRMATION` (1) — full USPS delivery confirmation
+ * - `CASS_VALIDATION` (2) — CASS address validation only (no tracking)
+ */
+export const DeliveryConfirmation = {
+  NONE: 0,
+  DELIVERY_CONFIRMATION: 1,
+  CASS_VALIDATION: 2,
+} as const;
+export type DeliveryConfirmation = (typeof DeliveryConfirmation)[keyof typeof DeliveryConfirmation];

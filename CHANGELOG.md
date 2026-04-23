@@ -5,6 +5,26 @@ All notable changes to the Handwrytten TypeScript SDK will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-04-22
+
+### Added
+
+- **Stamp options** — select first-class vs. presorted mail for US orders
+  - `client.shipping.stampOptions()` — list available stamp options from `GET /shipping/stampOptions`
+  - `stampOptionId` option on `client.orders.send()` and `client.basket.addOrder()` — maps to `stamp_option_id` on the API (ignored for international orders)
+  - New `StampOption` type and `parseStampOption()` exported from the package
+- **`DeliveryConfirmation` constant** — readable values (`NONE`, `DELIVERY_CONFIRMATION`, `CASS_VALIDATION`) for the new integer-valued delivery-confirmation field
+- Updated `User-Agent` string to `handwrytten-ts/1.4.0`
+
+### Changed
+
+- `deliveryConfirmation` on `client.orders.send()` and `client.basket.addOrder()` is now `number` (0/1/2) instead of `boolean`, matching the API's new tri-state field: `0` = none, `1` = USPS delivery confirmation, `2` = CASS address validation only. The API still casts `true`/`false` to `1`/`0` server-side, so prior runtime behavior is preserved — but TypeScript callers passing a `boolean` will now see a type error and should switch to `1`/`0` or the `DeliveryConfirmation` constant.
+
+### Fixed
+
+- `client.orders.send()` now forwards top-level `message` and `wishes` to `orders/placeBasket` so saved-address recipients (numeric IDs via `recipient: 12345` or `recipient: [1, 2, 3]`) receive the message. Previously these fields only reached inline dict recipients, and saved-address recipients were mailed with an empty message. Inline dict recipients continue to carry their own per-row overrides.
+- `client.orders.send()` now rejects a `recipient` array that mixes saved-address IDs with inline address objects — callers must pick one form. The behavior of `orders/placeBasket` on mixed input is undefined; failing fast at the SDK layer is safer than silently sending partial data.
+
 ## [1.3.0] - 2026-03-13
 
 ### Added

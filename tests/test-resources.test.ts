@@ -469,6 +469,26 @@ describe("BasketResource", () => {
     const count = await client.basket.count();
     expect(count).toBe(3);
   });
+
+  it("addOrder serializes delivery_confirmation as int", async () => {
+    const { client, calls } = makeClient([
+      { body: { order_id: 1 } },
+      { body: { order_id: 2 } },
+      { body: { order_id: 3 } },
+    ]);
+    await client.basket.addOrder({ cardId: "1", deliveryConfirmation: 0 });
+    await client.basket.addOrder({ cardId: "1", deliveryConfirmation: 1 });
+    await client.basket.addOrder({ cardId: "1", deliveryConfirmation: 2 });
+    expect((calls[0].parsedBody as Record<string, unknown>).delivery_confirmation).toBe(0);
+    expect((calls[1].parsedBody as Record<string, unknown>).delivery_confirmation).toBe(1);
+    expect((calls[2].parsedBody as Record<string, unknown>).delivery_confirmation).toBe(2);
+  });
+
+  it("addOrder passes stamp_option_id", async () => {
+    const { client, calls } = makeClient([{ body: { order_id: 1 } }]);
+    await client.basket.addOrder({ cardId: "1", stampOptionId: 7 });
+    expect((calls[0].parsedBody as Record<string, unknown>).stamp_option_id).toBe(7);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -507,7 +527,7 @@ describe("OrdersResource", () => {
     expect(calls[1].url).toContain("basket/send");
   });
 
-  it("send with int recipient", async () => {
+  it("send with int recipient routes to address_ids", async () => {
     const { client, calls } = makeClient([
       { body: { order_id: 1 } },
       { body: { status: "ok" } },
@@ -519,8 +539,10 @@ describe("OrdersResource", () => {
       recipient: 12345,
     });
     const placeBody = calls[0].parsedBody as Record<string, unknown>;
-    const addrs = placeBody.addresses as Record<string, unknown>[];
-    expect(addrs[0]).toMatchObject({ address_id: 12345, message: "Hi" });
+    expect(placeBody.address_ids).toEqual([12345]);
+    expect(placeBody.addresses).toBeUndefined();
+    // Top-level message is forwarded so placeBasket can apply it to address_ids rows.
+    expect(placeBody.message).toBe("Hi");
   });
 
   it("send with sender dict applies from_* fields", async () => {
@@ -556,7 +578,22 @@ describe("OrdersResource", () => {
     expect(placeBody.return_address_id).toBe(12345);
   });
 
-  it("send bulk mixed types", async () => {
+  it("send rejects mixed arrays of IDs and inline addresses", async () => {
+    const { client } = makeClient([]);
+    await expect(
+      client.orders.send({
+        cardId: "100",
+        font: "hwDavid",
+        message: "Default msg",
+        recipient: [
+          { firstName: "A", lastName: "B", street1: "1 St", city: "X", state: "AZ", zip: "00000" },
+          99999,
+        ],
+      }),
+    ).rejects.toThrow(/all saved-address IDs.*or all inline/);
+  });
+
+  it("send bulk all-numeric routes to address_ids", async () => {
     const { client, calls } = makeClient([
       { body: { order_id: 1 } },
       { body: { status: "ok" } },
@@ -565,15 +602,12 @@ describe("OrdersResource", () => {
       cardId: "100",
       font: "hwDavid",
       message: "Default msg",
-      recipient: [
-        { firstName: "A", lastName: "B", street1: "1 St", city: "X", state: "AZ", zip: "00000" },
-        99999,
-      ],
+      recipient: [111, 222, 333],
     });
-    const addrs = (calls[0].parsedBody as Record<string, unknown>).addresses as Record<string, unknown>[];
-    expect(addrs).toHaveLength(2);
-    expect(addrs[0]).toHaveProperty("to_first_name", "A");
-    expect(addrs[1]).toHaveProperty("address_id", 99999);
+    const placeBody = calls[0].parsedBody as Record<string, unknown>;
+    expect(placeBody.address_ids).toEqual([111, 222, 333]);
+    expect(placeBody.addresses).toBeUndefined();
+    expect(placeBody.message).toBe("Default msg");
   });
 
   it("send passes coupon to both steps", async () => {
@@ -648,6 +682,36 @@ describe("OrdersResource", () => {
     await client.orders.listPastBaskets({ page: 3 });
     expect(calls[0].url).toContain("page=3");
   });
+
+  it("send forwards delivery_confirmation as int", async () => {
+    const { client, calls } = makeClient([
+      { body: { order_id: 1 } },
+      { body: { status: "ok" } },
+    ]);
+    await client.orders.send({
+      cardId: "100",
+      font: "hwDavid",
+      message: "Hi",
+      recipient: 1,
+      deliveryConfirmation: 2,
+    });
+    expect((calls[0].parsedBody as Record<string, unknown>).delivery_confirmation).toBe(2);
+  });
+
+  it("send forwards stamp_option_id", async () => {
+    const { client, calls } = makeClient([
+      { body: { order_id: 1 } },
+      { body: { status: "ok" } },
+    ]);
+    await client.orders.send({
+      cardId: "100",
+      font: "hwDavid",
+      message: "Hi",
+      recipient: 1,
+      stampOptionId: 3,
+    });
+    expect((calls[0].parsedBody as Record<string, unknown>).stamp_option_id).toBe(3);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -660,5 +724,37 @@ describe("ProspectingResource", () => {
     const result = await client.prospecting.calculateTargets({ zipCode: "85281", radiusMiles: 5 });
     expect(calls[0].parsedBody).toMatchObject({ zip: "85281", radius: 5 });
     expect((result as Record<string, unknown>).targets).toBe(500);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Shipping
+// ---------------------------------------------------------------------------
+
+describe("ShippingResource", () => {
+  it("stampOptions returns StampOption[]", async () => {
+    const { client, calls } = makeClient([
+      {
+        body: [
+          { id: 1, name: "First Class", price: 0.73 },
+          { id: 2, name: "Presorted", price: 0.55 },
+        ],
+      },
+    ]);
+    const opts = await client.shipping.stampOptions();
+    expect(calls[0].url).toContain("shipping/stampOptions");
+    expect(opts).toHaveLength(2);
+    expect(opts[0].id).toBe(1);
+    expect(opts[0].name).toBe("First Class");
+    expect(opts[1].price).toBe(0.55);
+  });
+
+  it("stampOptions extracts from stamp_options key", async () => {
+    const { client } = makeClient([{
+      body: { stamp_options: [{ id: 5, name: "Custom" }] },
+    }]);
+    const opts = await client.shipping.stampOptions();
+    expect(opts).toHaveLength(1);
+    expect(opts[0].id).toBe(5);
   });
 });

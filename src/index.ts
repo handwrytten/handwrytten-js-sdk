@@ -54,10 +54,11 @@ export type {
   SavedAddress,
   Sender,
   Signature,
+  StampOption,
   State,
   User,
 } from "./models.js";
-export { QRCodeLocation, ZoneType } from "./models.js";
+export { DeliveryConfirmation, QRCodeLocation, ZoneType } from "./models.js";
 
 // Parsers (for advanced usage)
 export {
@@ -74,6 +75,7 @@ export {
   parseQRCode,
   parseSavedAddress,
   parseSignature,
+  parseStampOption,
   parseState,
   parseUser,
 } from "./models.js";

@@ -8,7 +8,13 @@
  *   HANDWRYTTEN_API_KEY=your_key npx tsx examples/example.ts
  */
 
-import { Handwrytten, HandwryttenError, QRCodeLocation, ZoneType } from "handwrytten";
+import {
+  DeliveryConfirmation,
+  Handwrytten,
+  HandwryttenError,
+  QRCodeLocation,
+  ZoneType,
+} from "handwrytten";
 
 const API_KEY = process.env.HANDWRYTTEN_API_KEY ?? "<your_api_key_here>";
 
@@ -69,6 +75,15 @@ async function main() {
   console.log(`  All inserts (incl. historical): ${allInserts.length}`);
   console.log();
 
+  // 5bb. List stamp options (first class vs. presorted)
+  console.log("--- Stamp Options ---");
+  const stampOptions = await client.shipping.stampOptions();
+  for (const s of stampOptions) {
+    console.log(`  [${s.id}] ${s.name ?? ""}${s.price != null ? ` ($${s.price})` : ""}`);
+  }
+  console.log(`  ... ${stampOptions.length} total stamp options`);
+  console.log();
+
   // 5c. List signatures
   console.log("--- Signatures ---");
   const signatures = await client.auth.listSignatures();
@@ -90,7 +105,7 @@ async function main() {
   }
   console.log();
 
-  // 7. Send a single order with sender
+  // 7. Send a single order with sender, delivery confirmation, and a stamp option
   console.log("--- Send Single Order ---");
   console.log(`  Using cardId=${cards[0].id}, font=${fonts[0].id}`);
   await client.orders.send({
@@ -98,6 +113,8 @@ async function main() {
     font: fonts[0].id,
     message: "Thanks for being an amazing customer!",
     wishes: "Best,\nThe Handwrytten Team",
+    deliveryConfirmation: DeliveryConfirmation.DELIVERY_CONFIRMATION,
+    stampOptionId: stampOptions[0]?.id,
     sender: {
       firstName: "David",
       lastName: "Wachs",

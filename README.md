@@ -134,25 +134,17 @@ const result = await client.orders.send({
   recipient: 67890, // saved recipient address ID
 });
 
-// Mix saved IDs and inline addresses in a bulk send
+// Bulk send to multiple saved addresses — all numeric IDs
 const result2 = await client.orders.send({
   cardId: "12345",
   font: "hwDavid",
   message: "Hello!",
   sender: 98765,
-  recipient: [
-    67890, // saved address ID
-    {
-      firstName: "Jane",
-      lastName: "Doe",
-      street1: "123 Main St",
-      city: "Phoenix",
-      state: "AZ",
-      zip: "85001",
-    },
-  ],
+  recipient: [67890, 67891, 67892],
 });
 ```
+
+When sending to multiple recipients, the array must be either all saved-address IDs or all inline address objects — not a mix.
 
 ### Use Typed Models
 
@@ -423,6 +415,31 @@ for (const sig of signatures) {
 }
 ```
 
+### Delivery Confirmation & Stamp Options
+
+Opt into USPS tracking or CASS address validation, and pick a stamp tier
+(first-class vs. presorted) for US mail.
+
+```typescript
+import { DeliveryConfirmation } from "handwrytten";
+
+// Browse available stamp options (US mail; ignored for international)
+const stampOptions = await client.shipping.stampOptions();
+for (const s of stampOptions) {
+  console.log(`[${s.id}] ${s.name} ($${s.price ?? "—"})`);
+}
+
+await client.orders.send({
+  cardId: "12345",
+  font: "hwDavid",
+  message: "Hello!",
+  // 0 = none, 1 = delivery confirmation, 2 = CASS validation only
+  deliveryConfirmation: DeliveryConfirmation.DELIVERY_CONFIRMATION,
+  stampOptionId: stampOptions[0].id,
+  recipient: { /* ... */ },
+});
+```
+
 ### Two-Step Basket Workflow
 
 For finer control, use `client.basket` directly instead of `client.orders.send()`:
@@ -502,6 +519,7 @@ try {
 | `client.orders` | `send()`, `get(id)`, `list()`, `listPastBaskets()` |
 | `client.basket` | `addOrder()`, `send()`, `remove(basketId)`, `clear()`, `list()`, `getItem(basketId)`, `count()` |
 | `client.prospecting` | `calculateTargets({ zipCode, radiusMiles })` |
+| `client.shipping` | `stampOptions()` |
 
 ## Authentication
 

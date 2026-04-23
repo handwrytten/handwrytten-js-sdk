@@ -1,7 +1,7 @@
 /** Multi-step basket/cart workflow for complex orders. */
 
 import type { HttpClient } from "../http-client.js";
-import type { ApiRecord } from "../models.js";
+import type { ApiRecord, DeliveryConfirmation } from "../models.js";
 import { flattenAddress } from "./helpers.js";
 
 // ---------------------------------------------------------------------------
@@ -34,7 +34,21 @@ export interface AddOrderOptions {
   couponCode?: string;
   checkQuantity?: boolean;
   checkQuantityInserts?: boolean;
-  deliveryConfirmation?: boolean;
+  /**
+   * Delivery confirmation mode. Accepts:
+   * - `0` — none (default)
+   * - `1` — USPS delivery confirmation
+   * - `2` — CASS address validation only
+   *
+   * Use the {@link DeliveryConfirmation} constant for readability.
+   */
+  deliveryConfirmation?: DeliveryConfirmation | number;
+  /**
+   * Stamp option ID selecting first-class vs. presorted mail for US orders.
+   * Fetch available options via `client.shipping.stampOptions()`.
+   * Ignored for international orders.
+   */
+  stampOptionId?: number;
   shippingMethodId?: number;
   shippingRateId?: number;
   shippingAddressId?: number;
@@ -86,6 +100,7 @@ export class BasketResource {
       checkQuantity,
       checkQuantityInserts,
       deliveryConfirmation,
+      stampOptionId,
       shippingMethodId,
       shippingRateId,
       shippingAddressId,
@@ -134,7 +149,8 @@ export class BasketResource {
     if (couponCode != null) body.couponCode = couponCode;
     if (checkQuantity != null) body.check_quantity = checkQuantity;
     if (checkQuantityInserts != null) body.check_quantity_inserts = checkQuantityInserts;
-    if (deliveryConfirmation != null) body.delivery_confirmation = deliveryConfirmation;
+    if (deliveryConfirmation != null) body.delivery_confirmation = Number(deliveryConfirmation);
+    if (stampOptionId != null) body.stamp_option_id = stampOptionId;
     if (shippingMethodId != null) body.shipping_method_id = shippingMethodId;
     if (shippingRateId != null) body.shipping_rate_id = shippingRateId;
     if (shippingAddressId != null) body.shipping_address_id = shippingAddressId;
