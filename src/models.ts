@@ -63,6 +63,36 @@ export function parseCard(data: ApiRecord): Card {
 }
 
 // ---------------------------------------------------------------------------
+// Category
+// ---------------------------------------------------------------------------
+
+export interface Category {
+  id: number;
+  name: string;
+  slug?: string;
+  taxonomy?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  checked?: number;
+  icon?: string;
+  raw: ApiRecord;
+}
+
+export function parseCategory(data: ApiRecord): Category {
+  return {
+    id: Number(data.id ?? 0),
+    name: (data.name as string) ?? "",
+    slug: (data.slug as string) ?? undefined,
+    taxonomy: (data.taxonomy as string) ?? undefined,
+    metaTitle: (data.meta_title as string) ?? undefined,
+    metaDescription: (data.meta_description as string) ?? undefined,
+    checked: data.checked != null ? Number(data.checked) : undefined,
+    icon: (data.icon as string) ?? undefined,
+    raw: data,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Font
 // ---------------------------------------------------------------------------
 

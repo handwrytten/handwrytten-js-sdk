@@ -1,8 +1,8 @@
 /** Browse card and stationery templates. */
 
 import type { HttpClient } from "../http-client.js";
-import type { ApiRecord, Card } from "../models.js";
-import { parseCard } from "../models.js";
+import type { ApiRecord, Card, Category } from "../models.js";
+import { parseCard, parseCategory } from "../models.js";
 
 export class CardsResource {
   constructor(private readonly http: HttpClient) {}
@@ -21,9 +21,9 @@ export class CardsResource {
   }
 
   /** Get available card categories. */
-  async categories(): Promise<ApiRecord[]> {
+  async categories(): Promise<Category[]> {
     const data = await this.http.get("categories/list");
-    return toArray(data);
+    return toArray(data).map(parseCategory);
   }
 }
 
