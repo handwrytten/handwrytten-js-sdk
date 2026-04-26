@@ -77,6 +77,16 @@ describe("CardsResource", () => {
     const cats = await client.cards.categories();
     expect(cats).toHaveLength(1);
   });
+
+  it("categories unwraps {categories: [...]} envelope", async () => {
+    const { client, calls } = makeClient([{
+      body: { httpCode: 200, status: "ok", categories: [{ id: 1, name: "Cat1" }, { id: 2, name: "Cat2" }] },
+    }]);
+    const cats = await client.cards.categories();
+    expect(cats).toHaveLength(2);
+    expect(cats[0]).toMatchObject({ id: 1, name: "Cat1" });
+    expect(calls[0].url).toContain("categories/list");
+  });
 });
 
 // ---------------------------------------------------------------------------
