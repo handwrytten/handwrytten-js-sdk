@@ -22,8 +22,8 @@ export class CardsResource {
 
   /** Get available card categories. */
   async categories(): Promise<ApiRecord[]> {
-    const data = await this.http.get("cards/categories");
-    return Array.isArray(data) ? (data as ApiRecord[]) : [];
+    const data = await this.http.get("categories/list");
+    return toArray(data);
   }
 }
 
@@ -34,7 +34,7 @@ function isRecord(v: unknown): v is ApiRecord {
 function toArray(data: unknown): ApiRecord[] {
   if (Array.isArray(data)) return data as ApiRecord[];
   if (isRecord(data)) {
-    return ((data.results ?? data.cards ?? []) as ApiRecord[]);
+    return ((data.results ?? data.cards ?? data.categories ?? []) as ApiRecord[]);
   }
   return [];
 }
