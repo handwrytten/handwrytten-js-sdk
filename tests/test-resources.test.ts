@@ -87,6 +87,36 @@ describe("CardsResource", () => {
     expect(cats[0]).toMatchObject({ id: 1, name: "Cat1" });
     expect(calls[0].url).toContain("categories/list");
   });
+
+  it("categories converts snake_case fields to camelCase", async () => {
+    const { client } = makeClient([{
+      body: {
+        categories: [{
+          id: 462,
+          name: "Anniversary",
+          slug: "anniversary",
+          taxonomy: "NONE",
+          meta_title: "Celebrate Your Anniversary",
+          meta_description: "Anniversary cards",
+          checked: 1,
+          icon: "https://cdn.example.com/icon.png",
+        }],
+      },
+    }]);
+    const cats = await client.cards.categories();
+    expect(cats[0]).toMatchObject({
+      id: 462,
+      name: "Anniversary",
+      slug: "anniversary",
+      taxonomy: "NONE",
+      metaTitle: "Celebrate Your Anniversary",
+      metaDescription: "Anniversary cards",
+      checked: 1,
+      icon: "https://cdn.example.com/icon.png",
+    });
+    // Original snake_case payload preserved on .raw for escape hatches
+    expect(cats[0].raw.meta_title).toBe("Celebrate Your Anniversary");
+  });
 });
 
 // ---------------------------------------------------------------------------
