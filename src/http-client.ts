@@ -101,7 +101,7 @@ export class HttpClient {
     const headers: Record<string, string> = {
       Accept: "application/json",
       Authorization: this.accessToken ? `Bearer ${this.accessToken}` : this.apiKey!,
-      "User-Agent": "handwrytten-ts/1.4.0",
+      "User-Agent": "handwrytten-ts/1.6.0",
     };
 
     if (options.idempotencyKey) {
