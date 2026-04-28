@@ -242,9 +242,25 @@ describe("parseSignature", () => {
 
 describe("parseCountry", () => {
   it("parses country data", () => {
-    const c = parseCountry({ code: "US", name: "United States" });
+    const c = parseCountry({
+      id: 1,
+      name: "United States",
+      delivery_cost: "0.78",
+      aliases: "|USA|U.S.A.|United States of America|US|U.S.|",
+      ups_code: "US",
+    });
+    expect(c.id).toBe(1);
     expect(c.code).toBe("US");
     expect(c.name).toBe("United States");
+    expect(c.deliveryCost).toBe(0.78);
+    expect(c.aliases).toEqual(["USA", "U.S.A.", "United States of America", "US", "U.S."]);
+  });
+
+  it("handles missing optional fields", () => {
+    const c = parseCountry({ id: 99, name: "Nowhere" });
+    expect(c.code).toBe("");
+    expect(c.aliases).toEqual([]);
+    expect(c.deliveryCost).toBe(0);
   });
 });
 

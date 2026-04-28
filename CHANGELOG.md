@@ -5,6 +5,32 @@ All notable changes to the Handwrytten TypeScript SDK will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-04-27
+
+### Added
+
+- **Country delivery cost and aliases** — `client.addressBook.countries()` now returns enriched `Country` objects with the postage rate and alternate-name list typed at the SDK boundary
+  - `Country.id` (number) — numeric identifier; pass as `countryId` when adding addresses
+  - `Country.deliveryCost` (number) — first-class postage in USD (e.g. `0.78`), parsed from the API's string-decimal `delivery_cost`
+  - `Country.aliases` (`string[]`) — alternative names and codes the API matches against this country, parsed from the API's pipe-delimited `aliases` field
+  - The original payload remains accessible via `Country.raw`
+- Updated `User-Agent` string to `handwrytten-ts/1.6.0`
+
+### Fixed
+
+- `Country.code` now correctly returns the two-letter country code (e.g. `"US"`, `"CA"`) sourced from the API's `ups_code` field. Previously the parser read a non-existent `code` field and fell through to `id`, returning the stringified numeric ID instead. Callers that relied on the old behavior should switch to `Country.id` for the numeric identifier.
+
+## [1.5.0] - 2026-04-26
+
+### Added
+
+- **Card categories typed model** — `client.cards.categories()` now returns `Category[]` instead of `ApiRecord[]`
+  - New `Category` interface and `parseCategory()` helper exported from the package, following the existing tier-1 pattern (`Card`, `Font`, etc.) — `id` as number, snake_case fields converted to camelCase (e.g. `meta_title` → `metaTitle`), original payload preserved on `.raw`
+
+### Fixed
+
+- `client.cards.categories()` now correctly unwraps the API response envelope. The `categories/list` endpoint returns `{ httpCode, status, categories: [...] }`, but the previous implementation only accepted a bare array and silently returned `[]` for every real call. Now routes through the same array-extraction helper as `cards.list()`.
+
 ## [1.4.0] - 2026-04-22
 
 ### Added

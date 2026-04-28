@@ -360,15 +360,35 @@ export function parseSignature(data: ApiRecord): Signature {
 // ---------------------------------------------------------------------------
 
 export interface Country {
+  /** Numeric identifier — pass as `countryId` when adding addresses. */
+  id: number;
+  /** Two-letter country code (e.g. "US", "CA"). Empty for special non-country entries. */
   code: string;
+  /** Country name (e.g. "United States"). */
   name: string;
+  /** Alternative names and codes the API will match against this country. */
+  aliases: string[];
+  /** Cost in USD to deliver a standard card to this country (e.g. 0.78). */
+  deliveryCost: number;
   raw: ApiRecord;
 }
 
 export function parseCountry(data: ApiRecord): Country {
+  const aliasesRaw = (data.aliases as string | undefined) ?? "";
+  const aliases = aliasesRaw
+    .split("|")
+    .map((a) => a.trim())
+    .filter((a) => a.length > 0);
+
+  const costRaw = data.delivery_cost ?? data.deliveryCost ?? 0;
+  const deliveryCost = typeof costRaw === "number" ? costRaw : Number(costRaw) || 0;
+
   return {
-    code: (data.code as string) ?? (data.id as string) ?? "",
+    id: Number(data.id ?? 0),
+    code: (data.ups_code as string) ?? (data.code as string) ?? "",
     name: (data.name as string) ?? "",
+    aliases,
+    deliveryCost,
     raw: data,
   };
 }

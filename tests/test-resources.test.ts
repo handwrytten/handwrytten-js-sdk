@@ -324,10 +324,25 @@ describe("AddressBookResource", () => {
   });
 
   it("countries returns Country[]", async () => {
-    const { client } = makeClient([{ body: [{ code: "US", name: "United States" }] }]);
+    const { client } = makeClient([
+      {
+        body: [
+          {
+            id: 1,
+            name: "United States",
+            delivery_cost: "0.78",
+            aliases: "|USA|US|",
+            ups_code: "US",
+          },
+        ],
+      },
+    ]);
     const countries = await client.addressBook.countries();
     expect(countries).toHaveLength(1);
+    expect(countries[0].id).toBe(1);
     expect(countries[0].code).toBe("US");
+    expect(countries[0].deliveryCost).toBe(0.78);
+    expect(countries[0].aliases).toEqual(["USA", "US"]);
   });
 
   it("states returns State[]", async () => {
