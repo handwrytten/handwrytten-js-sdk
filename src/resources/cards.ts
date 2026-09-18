@@ -3,6 +3,7 @@
 import type { HttpClient } from "../http-client.js";
 import type { ApiRecord, Card, Category } from "../models.js";
 import { parseCard, parseCategory } from "../models.js";
+import { HandwryttenError } from "../errors.js";
 
 export class CardsResource {
   constructor(private readonly http: HttpClient) {}
@@ -16,8 +17,12 @@ export class CardsResource {
 
   /** Get a single card by ID. */
   async get(cardId: string): Promise<Card> {
-    const data = await this.http.get(`cards/get/${cardId}`);
-    return parseCard(isRecord(data) ? data : {});
+    const data = await this.http.get("cards/view", { card_id: cardId });
+    const card = isRecord(data) ? data.card : undefined;
+    if (!isRecord(card) || card.id == null || String(card.id) !== cardId) {
+      throw new HandwryttenError("Card lookup returned no matching card.", null, data);
+    }
+    return parseCard(card);
   }
 
   /** Get available card categories. */

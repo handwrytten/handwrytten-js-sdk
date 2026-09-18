@@ -65,11 +65,39 @@ describe("CardsResource", () => {
     expect(cards[0].id).toBe("2");
   });
 
-  it("get returns a single Card", async () => {
-    const { client, calls } = makeClient([{ body: { id: 100, title: "TY" } }]);
+  it("get uses cards/view and preserves dimensions from the card envelope", async () => {
+    const raw = { id: 100, name: "TY", closed_width: 5.5, closed_height: 4.25,
+      preview_margin_top: 0, preview_margin_right: "0.300",
+      preview_margin_bottom: "0.300", preview_margin_left: "0.300" };
+    const { client, calls } = makeClient([{ body: { httpCode: 200, status: "ok", card: raw } }]);
     const card = await client.cards.get("100");
     expect(card.id).toBe("100");
-    expect(calls[0].url).toContain("cards/get/100");
+    expect(card.title).toBe("TY");
+    expect(card.raw).toEqual(raw);
+    const url = new URL(calls[0].url);
+    expect(url.pathname).toBe("/v2/cards/view");
+    expect(url.searchParams.get("card_id")).toBe("100");
+    expect(calls[0].init.method).toBe("GET");
+    expect(new Headers(calls[0].init.headers).get("Authorization")).toBe("test-key");
+  });
+
+  it("get keeps OAuth authentication and accepts string card IDs in responses", async () => {
+    const mock = createMockFetch([{ body: { status: "ok", card: { id: "100", name: "TY" } } }]);
+    const client = new Handwrytten({ accessToken: "test-token", fetch: mock.fetch });
+    expect((await client.cards.get("100")).id).toBe("100");
+    expect(new Headers(mock.calls[0].init.headers).get("Authorization")).toBe("Bearer test-token");
+  });
+
+  it.each([{}, { card: null }, { card: [] }, { card: {} }, { card: { id: 101 } }])(
+    "get rejects a missing or mismatched card: %j", async body => {
+      const { client } = makeClient([{ body }]);
+      await expect(client.cards.get("100")).rejects.toThrow("Card lookup returned no matching card.");
+    },
+  );
+
+  it.each([400, 401, 404])("get preserves backend errors (HTTP %i)", async status => {
+    const { client } = makeClient([{ status, body: { message: "Card lookup failed" } }]);
+    await expect(client.cards.get("100")).rejects.toMatchObject({ statusCode: status });
   });
 
   it("categories returns list", async () => {
