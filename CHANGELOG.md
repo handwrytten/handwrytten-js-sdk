@@ -5,6 +5,27 @@ All notable changes to the Handwrytten TypeScript SDK will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [1.7.0] - 2026-09-23
+
+### Added
+
+- `DeliveryConfirmation.CONFIRMATION` and `DeliveryConfirmation.CASS_ONLY` aliases matching the Python SDK names.
+- `deliveryConfirmation` accepts booleans again (`false` maps to 0, `true` to 1).
+- Updated `User-Agent` string to `handwrytten-ts/1.7.0`.
+
+### Fixed
+
+- Include the requested image type in multipart uploads without modifying caller-owned FormData.
+- Expand shared regression fixtures to cover all 12 resources / 44 public methods and numeric response fields.
+- Fix country-list envelope parsing and replace the nonexistent states endpoint with the selected country’s nested states.
+- Match Python basket validation and per-row return-address handling without mutating caller input.
+- Accept `options` stamp envelopes and `label` names in stamp-option responses.
+- Reject invalid scalar recipients before sending and preserve non-JSON HTTP error bodies.
+
+See [SDK-PARITY.md](SDK-PARITY.md) for the cross-SDK review and validation scope.
+
 ## [1.6.0] - 2026-04-27
 
 ### Added

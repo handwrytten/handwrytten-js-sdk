@@ -11,7 +11,7 @@ import { parseCustomCard, parseCustomImage, parseDimension } from "../models.js"
 export interface UploadImageOptions {
   /** Publicly accessible URL of the image (JPEG/PNG/GIF). */
   url?: string;
-  /** FormData file field for local uploads (browser) or a Node.js readable stream. */
+  /** FormData containing a `file` field (supported in browsers and Node.js). */
   file?: FormData;
   /** `"logo"` (writing-side logo) or `"cover"` (full-bleed front/back image). */
   imageType?: string;
@@ -124,7 +124,10 @@ export class CustomCardsResource {
         type: imageType,
       });
     } else {
-      data = await this.http.postMultipart("cards/uploadCustomLogo", options.file!);
+      const form = new FormData();
+      options.file!.forEach((value, key) => form.append(key, value));
+      form.set("type", imageType);
+      data = await this.http.postMultipart("cards/uploadCustomLogo", form);
     }
 
     return parseCustomImage(isRecord(data) ? data : {});

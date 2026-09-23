@@ -374,10 +374,11 @@ describe("AddressBookResource", () => {
   });
 
   it("states returns State[]", async () => {
-    const { client, calls } = makeClient([{ body: [{ code: "AZ", name: "Arizona" }] }]);
+    const { client, calls } = makeClient([{ body: { countries: [{ ups_code: "US", states: [{ short_name: "AZ", name: "Arizona" }] }] } }]);
     const states = await client.addressBook.states("US");
     expect(states).toHaveLength(1);
-    expect(calls[0].url).toContain("country=US");
+    expect(calls[0].url).toContain("countries/list");
+    expect(states[0].code).toBe("AZ");
   });
 });
 

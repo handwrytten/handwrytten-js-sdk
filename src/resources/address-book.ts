@@ -204,20 +204,16 @@ export class AddressBookResource {
     const items = Array.isArray(data)
       ? (data as ApiRecord[])
       : isRecord(data)
-        ? ((data.results ?? []) as ApiRecord[])
+        ? ((data.countries ?? data.results ?? []) as ApiRecord[])
         : [];
     return items.map(parseCountry);
   }
 
   /** Get states/provinces for a country. */
   async states(countryCode = "US"): Promise<State[]> {
-    const data = await this.http.get("states/list", { country: countryCode });
-    const items = Array.isArray(data)
-      ? (data as ApiRecord[])
-      : isRecord(data)
-        ? ((data.results ?? []) as ApiRecord[])
-        : [];
-    return items.map(parseState);
+    const country = (await this.countries()).find(c => c.code.toUpperCase() === countryCode.toUpperCase());
+    const items = country?.raw.states;
+    return Array.isArray(items) ? (items as ApiRecord[]).map(parseState) : [];
   }
 }
 

@@ -401,7 +401,7 @@ export interface State {
 
 export function parseState(data: ApiRecord): State {
   return {
-    code: (data.code as string) ?? (data.abbreviation as string) ?? "",
+    code: (data.code as string) ?? (data.abbreviation as string) ?? (data.short_name as string) ?? "",
     name: (data.name as string) ?? "",
     raw: data,
   };
@@ -450,7 +450,7 @@ export interface StampOption {
 export function parseStampOption(data: ApiRecord): StampOption {
   return {
     id: Number(data.id ?? 0),
-    name: (data.name as string) ?? (data.title as string) ?? undefined,
+    name: (data.name as string) ?? (data.title as string) ?? (data.label as string) ?? undefined,
     description: (data.description as string) ?? undefined,
     price: data.price != null ? Number(data.price) : undefined,
     raw: data,
@@ -489,5 +489,9 @@ export const DeliveryConfirmation = {
   NONE: 0,
   DELIVERY_CONFIRMATION: 1,
   CASS_VALIDATION: 2,
+  /** Alias shared with the Python SDK. */
+  CONFIRMATION: 1,
+  /** Alias shared with the Python SDK. */
+  CASS_ONLY: 2,
 } as const;
 export type DeliveryConfirmation = (typeof DeliveryConfirmation)[keyof typeof DeliveryConfirmation];

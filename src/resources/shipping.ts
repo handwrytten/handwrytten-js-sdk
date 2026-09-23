@@ -28,7 +28,7 @@ function isRecord(v: unknown): v is ApiRecord {
 function toArray(data: unknown): ApiRecord[] {
   if (Array.isArray(data)) return data as ApiRecord[];
   if (isRecord(data)) {
-    return ((data.stamp_options ?? data.stampOptions ?? data.results ?? []) as ApiRecord[]);
+    return ((data.stamp_options ?? data.stampOptions ?? data.options ?? data.results ?? []) as ApiRecord[]);
   }
   return [];
 }

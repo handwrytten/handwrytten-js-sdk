@@ -40,9 +40,10 @@ export interface AddOrderOptions {
    * - `1` — USPS delivery confirmation
    * - `2` — CASS address validation only
    *
+   * Booleans remain supported: false maps to 0, true maps to 1.
    * Use the {@link DeliveryConfirmation} constant for readability.
    */
-  deliveryConfirmation?: DeliveryConfirmation | number;
+  deliveryConfirmation?: DeliveryConfirmation | number | boolean;
   /**
    * Stamp option ID selecting first-class vs. presorted mail for US orders.
    * Fetch available options via `client.shipping.stampOptions()`.
@@ -110,6 +111,10 @@ export class BasketResource {
       ...extra
     } = options;
 
+    if (addresses != null && addressIds != null) {
+      throw new Error("Pass either addresses or addressIds, not both.");
+    }
+
     const body: ApiRecord = { card_id: Number(cardId) };
 
     if (message != null) body.message = message;
@@ -123,7 +128,7 @@ export class BasketResource {
       const converted: ApiRecord[] = [];
       for (const addr of addresses) {
         if (hasToPrefix(addr) || "address_id" in addr) {
-          converted.push(addr);
+          converted.push({ ...addr });
         } else {
           const a = { ...addr };
           const rowMessage = a.message;
@@ -134,6 +139,12 @@ export class BasketResource {
           if (rowMessage != null) row.message = rowMessage;
           if (rowWishes != null) row.wishes = rowWishes;
           converted.push(row);
+        }
+      }
+      // The API may use the per-row return address instead of the top-level value.
+      if (returnAddressId != null) {
+        for (const row of converted) {
+          if (!("return_address_id" in row)) row.return_address_id = returnAddressId;
         }
       }
       body.addresses = converted;

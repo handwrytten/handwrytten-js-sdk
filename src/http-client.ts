@@ -101,7 +101,7 @@ export class HttpClient {
     const headers: Record<string, string> = {
       Accept: "application/json",
       Authorization: this.accessToken ? `Bearer ${this.accessToken}` : this.apiKey!,
-      "User-Agent": "handwrytten-ts/1.6.0",
+      "User-Agent": "handwrytten-ts/1.7.0",
     };
 
     if (options.idempotencyKey) {
@@ -181,11 +181,12 @@ export class HttpClient {
   // -----------------------------------------------------------------------
 
   private async _handleResponse(response: Response): Promise<unknown> {
+    // Consume the body once so non-JSON error details remain available.
+    const text = await response.text();
     let body: unknown;
     try {
-      body = await response.json();
+      body = JSON.parse(text);
     } catch {
-      const text = await response.text().catch(() => "");
       body = text || null;
     }
 
