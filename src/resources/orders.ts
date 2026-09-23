@@ -39,9 +39,10 @@ export interface SendOrderOptions {
    * - `1` — USPS delivery confirmation
    * - `2` — CASS address validation only
    *
+   * Booleans remain supported: false maps to 0, true maps to 1.
    * Use the {@link DeliveryConfirmation} constant for readability.
    */
-  deliveryConfirmation?: DeliveryConfirmation | number;
+  deliveryConfirmation?: DeliveryConfirmation | number | boolean;
   /**
    * Stamp option ID selecting first-class vs. presorted mail for US orders.
    * Fetch available options via `client.shipping.stampOptions()`.
@@ -147,6 +148,9 @@ export class OrdersResource {
         // {address_id} is not recognised and causes blank addresses.
         addressIds.push(r);
       } else {
+        if (r == null || typeof r !== "object" || Array.isArray(r)) {
+          throw new TypeError("Each recipient must be an address object or saved-address ID");
+        }
         let row: ApiRecord = {};
         const rObj = { ...(r as ApiRecord) };
         const rowMessage = rObj.message;

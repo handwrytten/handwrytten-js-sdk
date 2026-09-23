@@ -181,11 +181,12 @@ export class HttpClient {
   // -----------------------------------------------------------------------
 
   private async _handleResponse(response: Response): Promise<unknown> {
+    // Consume the body once so non-JSON error details remain available.
+    const text = await response.text();
     let body: unknown;
     try {
-      body = await response.json();
+      body = JSON.parse(text);
     } catch {
-      const text = await response.text().catch(() => "");
       body = text || null;
     }
 
