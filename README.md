@@ -433,7 +433,7 @@ await client.orders.send({
   cardId: "12345",
   font: "hwDavid",
   message: "Hello!",
-  // 0 = none, 1 = delivery confirmation, 2 = CASS validation only
+  // 0 = none, 1 = delivery confirmation, 2 = CASS validation only (CONFIRMATION / CASS_ONLY aliases also work)
   deliveryConfirmation: DeliveryConfirmation.DELIVERY_CONFIRMATION,
   stampOptionId: stampOptions[0].id,
   recipient: { /* ... */ },
