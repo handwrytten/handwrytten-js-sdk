@@ -28,6 +28,11 @@ export interface AddOrderOptions {
   returnAddressId?: number;
   denominationId?: number;
   insertId?: number;
+  /**
+   * Gift box ID from `client.bundles.list()`. US recipients only; cannot be
+   * combined with `insertId` or `denominationId`.
+   */
+  bundleId?: number;
   signatureId?: number;
   signature2Id?: number;
   dateSend?: string;
@@ -94,6 +99,7 @@ export class BasketResource {
       returnAddressId,
       denominationId,
       insertId,
+      bundleId,
       signatureId,
       signature2Id,
       dateSend,
@@ -154,6 +160,7 @@ export class BasketResource {
     if (returnAddressId != null) body.return_address_id = returnAddressId;
     if (denominationId != null) body.denomination_id = denominationId;
     if (insertId != null) body.insert_id = insertId;
+    if (bundleId != null) body.bundle_id = bundleId;
     if (signatureId != null) body.signature_id = signatureId;
     if (signature2Id != null) body.signature2_id = signature2Id;
     if (dateSend != null) body.date_send = dateSend;

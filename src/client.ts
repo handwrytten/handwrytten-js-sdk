@@ -37,6 +37,7 @@ import {
   AddressBookResource,
   AuthResource,
   BasketResource,
+  BundlesResource,
   CardsResource,
   CustomCardsResource,
   FontsResource,
@@ -72,6 +73,7 @@ export class Handwrytten {
   readonly fonts: FontsResource;
   readonly giftCards: GiftCardsResource;
   readonly inserts: InsertsResource;
+  readonly bundles: BundlesResource;
   readonly qrCodes: QRCodesResource;
   readonly addressBook: AddressBookResource;
   readonly basket: BasketResource;
@@ -107,6 +109,7 @@ export class Handwrytten {
     this.fonts = new FontsResource(this._http);
     this.giftCards = new GiftCardsResource(this._http);
     this.inserts = new InsertsResource(this._http);
+    this.bundles = new BundlesResource(this._http);
     this.qrCodes = new QRCodesResource(this._http);
     this.addressBook = new AddressBookResource(this._http);
     this.basket = new BasketResource(this._http);

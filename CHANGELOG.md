@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-10-27
+
+### Added
+
+- **Gift boxes (bundles)**: `client.bundles.list()` returns the gift boxes (cookie boxes, etc.) available to your account, from `GET /bundles/list`. It returns an empty array if your account cannot purchase gift boxes.
+- **Bundle model**: new `Bundle` type (`id`, `name`, `description`, `price`, `deliveryCost`, `imageUrl`) and `parseBundle()` exported from the package.
+- `bundleId` option on `client.orders.send()` and `client.basket.addOrder()`. Gift boxes are US-only and cannot be combined with `insertId` or `denominationId`; the API rejects those orders.
+
 ## [1.7.0] - 2026-09-23
 
 ### Added

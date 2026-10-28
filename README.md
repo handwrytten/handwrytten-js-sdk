@@ -281,7 +281,7 @@ for (const font of fonts) {
 const customizerFonts = await client.fonts.listForCustomizer();
 ```
 
-### Gift Cards and Inserts
+### Gift Cards, Inserts and Gift Boxes
 
 ```typescript
 // List gift cards with their denominations (price points)
@@ -312,6 +312,22 @@ await client.orders.send({
   font: "hwDavid",
   message: "Hello!",
   insertId: Number(inserts[0].id),
+  recipient: { /* ... */ },
+});
+
+// List gift boxes (cookie boxes, etc.) available to your account
+const bundles = await client.bundles.list();
+for (const b of bundles) {
+  console.log(`${b.id}: ${b.name} ($${b.price} + $${b.deliveryCost} delivery)`);
+}
+
+// Ship a gift box with the card (US recipients only; cannot be combined
+// with an insert or gift card)
+await client.orders.send({
+  cardId: "12345",
+  font: "hwDavid",
+  message: "Enjoy the cookies!",
+  bundleId: bundles[0].id,
   recipient: { /* ... */ },
 });
 ```
@@ -514,6 +530,7 @@ try {
 | `client.fonts` | `list()`, `listForCustomizer()` |
 | `client.giftCards` | `list()` |
 | `client.inserts` | `list({ includeHistorical })` |
+| `client.bundles` | `list()` |
 | `client.qrCodes` | `list()`, `create()`, `delete()`, `frames()` |
 | `client.addressBook` | `listRecipients()`, `addRecipient()`, `updateRecipient()`, `deleteRecipient()`, `listSenders()`, `addSender()`, `deleteSender()`, `countries()`, `states(country)` |
 | `client.orders` | `send()`, `get(id)`, `list()`, `listPastBaskets()` |
