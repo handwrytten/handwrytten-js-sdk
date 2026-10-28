@@ -39,6 +39,7 @@ export {
 // Models
 export type {
   ApiRecord,
+  Bundle,
   Card,
   Category,
   Country,
@@ -63,6 +64,7 @@ export { DeliveryConfirmation, QRCodeLocation, ZoneType } from "./models.js";
 
 // Parsers (for advanced usage)
 export {
+  parseBundle,
   parseCard,
   parseCategory,
   parseCountry,

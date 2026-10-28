@@ -188,6 +188,37 @@ export function parseInsert(data: ApiRecord): Insert {
 }
 
 // ---------------------------------------------------------------------------
+// Bundle (gift box)
+// ---------------------------------------------------------------------------
+
+/**
+ * A gift box (e.g. a cookie box) shipped with the card. Pass the `id` to
+ * `orders.send()` / `basket.addOrder()` as `bundleId`. US recipients only;
+ * cannot be combined with an insert or a gift card.
+ */
+export interface Bundle {
+  id: number;
+  name: string;
+  description?: string;
+  price?: number;
+  deliveryCost?: number;
+  imageUrl?: string;
+  raw: ApiRecord;
+}
+
+export function parseBundle(data: ApiRecord): Bundle {
+  return {
+    id: Number(data.id ?? 0),
+    name: (data.name as string) ?? "",
+    description: (data.description as string) ?? undefined,
+    price: data.price != null ? Number(data.price) : undefined,
+    deliveryCost: data.delivery_cost != null ? Number(data.delivery_cost) : undefined,
+    imageUrl: (data.image_url as string) || undefined,
+    raw: data,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // QR Code
 // ---------------------------------------------------------------------------
 

@@ -5,6 +5,7 @@ export type { CreateCustomCardOptions, UploadImageOptions } from "./custom-cards
 export { FontsResource } from "./fonts.js";
 export { GiftCardsResource } from "./gift-cards.js";
 export { InsertsResource } from "./inserts.js";
+export { BundlesResource } from "./bundles.js";
 export { QRCodesResource } from "./qr-codes.js";
 export type { CreateQRCodeOptions } from "./qr-codes.js";
 export { AddressBookResource } from "./address-book.js";

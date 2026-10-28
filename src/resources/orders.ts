@@ -29,6 +29,11 @@ export interface SendOrderOptions {
   messageAlign?: string;
   denominationId?: number;
   insertId?: number;
+  /**
+   * Gift box ID from `client.bundles.list()`. US recipients only; cannot be
+   * combined with `insertId` or `denominationId`.
+   */
+  bundleId?: number;
   creditCardId?: number;
   couponCode?: string;
   dateSend?: string;
@@ -98,6 +103,7 @@ export class OrdersResource {
       messageAlign,
       denominationId,
       insertId,
+      bundleId,
       creditCardId,
       couponCode,
       dateSend,
@@ -212,6 +218,7 @@ export class OrdersResource {
     if (messageAlign != null) placeOptions.messageAlign = messageAlign;
     if (denominationId != null) placeOptions.denominationId = denominationId;
     if (insertId != null) placeOptions.insertId = insertId;
+    if (bundleId != null) placeOptions.bundleId = bundleId;
     if (dateSend != null) placeOptions.dateSend = dateSend;
     if (deliveryConfirmation != null) placeOptions.deliveryConfirmation = deliveryConfirmation;
     if (stampOptionId != null) placeOptions.stampOptionId = stampOptionId;

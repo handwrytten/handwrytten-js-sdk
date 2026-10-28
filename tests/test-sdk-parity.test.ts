@@ -85,6 +85,15 @@ describe("cross-SDK regression fixtures", () => {
     expect(stamp).toMatchObject({ id: 2, name: "Presorted", price: 0.5 });
   });
 
+  it.each([null, "bundles", "results"])("bundle response %s", async key => {
+    const items = [fixture.bundle];
+    const { client, calls } = setup([key ? { [key]: items } : items]);
+    const [bundle] = await client.bundles.list();
+    expect(calls[0].url).toContain("bundles/list");
+    expect(bundle).toEqual({ id: 3, name: "Cookie Box", description: "A dozen cookies", price: 24,
+      deliveryCost: 9.5, imageUrl: "https://example.com/box.png", raw: fixture.bundle });
+  });
+
   it.each([false, true, 0, 1, 2])("delivery confirmation %s", async value => {
     const { client, calls } = setup([{}]);
     await client.basket.addOrder({ cardId: "100", deliveryConfirmation: value });
@@ -94,7 +103,8 @@ describe("cross-SDK regression fixtures", () => {
   it("saved recipient order has the same payload in both SDKs", async () => {
     const { client, calls } = setup([{}, {}]);
     await client.orders.send({ cardId: "100", font: "hwDavid", recipient: [1, 2], sender: 99,
-      message: "Hello", wishes: "Best", deliveryConfirmation: 2, stampOptionId: 2 });
+      message: "Hello", wishes: "Best", deliveryConfirmation: 2, stampOptionId: 2,
+      bundleId: 3 });
     expect(calls[0].parsedBody).toEqual(fixture.saved_order);
   });
 
