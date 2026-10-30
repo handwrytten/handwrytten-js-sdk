@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { Handwrytten } from "../src/client.js";
 import { createMockFetch } from "./helpers.js";
+import { ServerError } from "../src/errors.js";
 
 function makeClient(responses: Parameters<typeof createMockFetch>[0]) {
   const mock = createMockFetch(responses);
@@ -795,6 +796,92 @@ describe("OrdersResource", () => {
       stampOptionId: 3,
     });
     expect((calls[0].parsedBody as Record<string, unknown>).stamp_option_id).toBe(3);
+  });
+
+  it("sendSingle posts one singleStepOrder with flat recipient/sender fields", async () => {
+    const { client, calls } = makeClient([{ body: { status: "ok", order_id: 42 } }]);
+    const result = await client.orders.sendSingle({
+      cardId: "3404",
+      fontLabel: "Casual David",
+      message: "Hello!",
+      wishes: "Best",
+      recipient: {
+        firstName: "Jane",
+        lastName: "Doe",
+        street1: "123 Main",
+        city: "Phoenix",
+        state: "AZ",
+        zip: "85001",
+      },
+      sender: { firstName: "Joe", street1: "1 Elm", city: "Austin", state: "TX", zip: "73301" },
+      deliveryConfirmation: true,
+      checkCassBeforeSubmit: true,
+      suppressWarnings: true,
+      clientMetadata: "exec-1",
+    });
+    expect(result.order_id).toBe(42);
+    expect(calls).toHaveLength(1);
+    expect(calls[0].url).toContain("orders/singleStepOrder");
+    expect(calls[0].parsedBody).toEqual({
+      card_id: 3404,
+      font_label: "Casual David",
+      message: "Hello!",
+      wishes: "Best",
+      recipient_first_name: "Jane",
+      recipient_last_name: "Doe",
+      recipient_address1: "123 Main",
+      recipient_city: "Phoenix",
+      recipient_state: "AZ",
+      recipient_zip: "85001",
+      sender_first_name: "Joe",
+      sender_address1: "1 Elm",
+      sender_city: "Austin",
+      sender_state: "TX",
+      sender_zip: "73301",
+      delivery_confirmation: 1,
+      check_cass_before_submit: 1,
+      supressWarnings: true,
+      client_metadata: "exec-1",
+    });
+  });
+
+  it("sendSingle maps a numeric sender to return_address_id", async () => {
+    const { client, calls } = makeClient([{ body: { order_id: 1 } }]);
+    await client.orders.sendSingle({
+      cardId: 1,
+      fontLabel: "Casual David",
+      message: "Hi",
+      recipient: { recipient_first_name: "Jane", recipient_address1: "1 Main" },
+      sender: 99,
+    });
+    const body = calls[0].parsedBody as Record<string, unknown>;
+    expect(body.return_address_id).toBe(99);
+    expect(body.recipient_first_name).toBe("Jane");
+  });
+
+  it.each([[5], [[{ firstName: "Jane" }]], [null]])("sendSingle rejects recipient %j", async (recipient) => {
+    const { client, calls } = makeClient([]);
+    await expect(client.orders.sendSingle({
+      cardId: 1, fontLabel: "Casual David", message: "Hi", recipient: recipient as any,
+    })).rejects.toThrow(TypeError);
+    expect(calls).toHaveLength(0);
+  });
+
+  it.each([
+    ["sendSingle", (c: Handwrytten) => c.orders.sendSingle({ cardId: 1, fontLabel: "Casual David", message: "Hi", recipient: { firstName: "Jane" } })],
+    ["addOrder", (c: Handwrytten) => c.basket.addOrder({ cardId: "1", addressIds: [1] })],
+    ["basket.send", (c: Handwrytten) => c.basket.send()],
+  ])("%s does not retry a 500", async (_name, call) => {
+    const { client, calls } = makeClient([{ status: 500, body: { error: "fail" } }]);
+    await expect(call(client)).rejects.toThrow(ServerError);
+    expect(calls).toHaveLength(1);
+  });
+
+  it("send stops after a failed placeBasket instead of retrying it", async () => {
+    const { client, calls } = makeClient([{ status: 500, body: { error: "Operation timeout" } }]);
+    await expect(client.orders.send({ cardId: "1", font: "hwDavid", message: "Hi", recipient: 1 }))
+      .rejects.toThrow(ServerError);
+    expect(calls).toHaveLength(1);
   });
 });
 

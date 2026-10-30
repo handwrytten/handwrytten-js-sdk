@@ -95,6 +95,7 @@ export type {
   RecipientInput,
   SendBasketOptions,
   SendOrderOptions,
+  SendSingleOrderOptions,
   SenderInput,
   UpdateRecipientOptions,
   UploadImageOptions,

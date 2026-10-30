@@ -64,6 +64,52 @@ export interface SendOrderOptions {
   [key: string]: unknown;
 }
 
+export interface SendSingleOrderOptions {
+  cardId: string | number;
+  /**
+   * Handwriting font label, e.g. `"Casual David"` — the `label` from
+   * `client.fonts.list()`, not its `id`.
+   */
+  fontLabel: string;
+  message: string;
+  /** One recipient — a Recipient object or address dict. Saved address IDs are not supported. */
+  recipient: Recipient | ApiRecord;
+  wishes?: string;
+  /**
+   * Return address — Sender object, address dict, or saved address ID.
+   *
+   * Required in practice: the API does not fall back to the account's default
+   * return address and rejects the order without one. It can be omitted only
+   * by team members whose team enforces a return address.
+   */
+  sender?: SenderInput;
+  messageAlign?: string;
+  denominationId?: number;
+  insertId?: number;
+  /**
+   * Gift box ID from `client.bundles.list()`. US recipients only; cannot be
+   * combined with `insertId` or `denominationId`.
+   */
+  bundleId?: number;
+  creditCardId?: number;
+  couponCode?: string;
+  dateSend?: string;
+  validateAddress?: boolean;
+  checkCassBeforeSubmit?: boolean;
+  /**
+   * Delivery confirmation mode: `0` none (default), `1` USPS delivery
+   * confirmation, `2` CASS address validation only. Booleans map to 0/1.
+   */
+  deliveryConfirmation?: DeliveryConfirmation | number | boolean;
+  /** Stamp option ID from `client.shipping.stampOptions()`. Ignored for international orders. */
+  stampOptionId?: number;
+  webhookUrl?: string;
+  clientMetadata?: string;
+  suppressWarnings?: boolean;
+  /** Additional parameters passed to `orders/singleStepOrder`. */
+  [key: string]: unknown;
+}
+
 // ---------------------------------------------------------------------------
 // Resource
 // ---------------------------------------------------------------------------
@@ -244,6 +290,81 @@ export class OrdersResource {
     return this.basket.send(sendOptions);
   }
 
+  /**
+   * Create and pay for one order in a single call (`orders/singleStepOrder`).
+   *
+   * Unlike `send()`, this never touches the account's basket, so concurrent
+   * calls each pay only for their own card. Returns the API response,
+   * including `order_id`.
+   *
+   * A 5xx, timeout or network error is not retried, because the order may
+   * already exist. Check `client.orders.list()` before sending again.
+   */
+  async sendSingle(options: SendSingleOrderOptions): Promise<ApiRecord> {
+    const {
+      cardId,
+      fontLabel,
+      message,
+      recipient,
+      wishes,
+      sender,
+      messageAlign,
+      denominationId,
+      insertId,
+      bundleId,
+      creditCardId,
+      couponCode,
+      dateSend,
+      validateAddress,
+      checkCassBeforeSubmit,
+      deliveryConfirmation,
+      stampOptionId,
+      webhookUrl,
+      clientMetadata,
+      suppressWarnings,
+      ...extra
+    } = options;
+
+    if (recipient == null || typeof recipient !== "object" || Array.isArray(recipient)) {
+      throw new TypeError("recipient must be a single address object; saved address IDs and arrays are not supported");
+    }
+
+    const body: ApiRecord = {
+      card_id: Number(cardId),
+      font_label: fontLabel,
+      message,
+      ...flattenSingleStepAddress(recipient as ApiRecord, "recipient"),
+    };
+
+    if (sender != null) {
+      if (typeof sender === "number") {
+        body.return_address_id = sender;
+      } else {
+        Object.assign(body, flattenSingleStepAddress(sender as ApiRecord, "sender"));
+      }
+    }
+
+    if (wishes != null) body.wishes = wishes;
+    if (messageAlign != null) body.message_align = messageAlign;
+    if (denominationId != null) body.denomination_id = denominationId;
+    if (insertId != null) body.insert_id = insertId;
+    if (bundleId != null) body.bundle_id = bundleId;
+    if (creditCardId != null) body.credit_card_id = creditCardId;
+    if (couponCode != null) body.couponCode = couponCode;
+    if (dateSend != null) body.date_send = dateSend;
+    if (validateAddress != null) body.validate_address = validateAddress;
+    if (checkCassBeforeSubmit != null) body.check_cass_before_submit = checkCassBeforeSubmit ? 1 : 0;
+    if (deliveryConfirmation != null) body.delivery_confirmation = Number(deliveryConfirmation);
+    if (stampOptionId != null) body.stamp_option_id = stampOptionId;
+    if (webhookUrl != null) body.webhook_url = webhookUrl;
+    if (clientMetadata != null) body.client_metadata = clientMetadata;
+    if (suppressWarnings != null) body.supressWarnings = suppressWarnings;
+
+    Object.assign(body, extra);
+
+    return (await this.http.postNonIdempotent("orders/singleStepOrder", body)) as ApiRecord;
+  }
+
   /** Retrieve an order by ID. */
   async get(orderId: string): Promise<Order> {
     const data = await this.http.get(`orders/get/${orderId}`);
@@ -278,6 +399,12 @@ export class OrdersResource {
     }
     return Array.isArray(data) ? (data as ApiRecord[]) : [];
   }
+}
+
+/** singleStepOrder takes flat `recipient_*` / `sender_*` fields; already-prefixed keys pass through. */
+function flattenSingleStepAddress(data: ApiRecord, prefix: string): ApiRecord {
+  if (Object.keys(data).some((k) => k.startsWith(`${prefix}_`))) return { ...data };
+  return flattenAddress(data, prefix);
 }
 
 function isRecord(v: unknown): v is ApiRecord {

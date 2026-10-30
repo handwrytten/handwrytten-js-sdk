@@ -61,6 +61,17 @@ export class HttpClient {
     return this.request("POST", path, { body, idempotencyKey });
   }
 
+  /**
+   * POST that may create something that must not be duplicated (an order).
+   *
+   * Only a 429 is retried, since the server rejected the request before doing
+   * any work. A 5xx, timeout or network error may arrive after the server
+   * already created the order, so it is thrown to the caller instead.
+   */
+  async postNonIdempotent(path: string, body?: ApiRecord): Promise<unknown> {
+    return this.request("POST", path, { body, idempotent: false });
+  }
+
   async postMultipart(
     path: string,
     formData: FormData,
@@ -88,8 +99,11 @@ export class HttpClient {
       body?: ApiRecord;
       formData?: FormData;
       idempotencyKey?: string;
+      /** When false, retry only on 429 (see `postNonIdempotent`). Defaults to true. */
+      idempotent?: boolean;
     } = {},
   ): Promise<unknown> {
+    const idempotent = options.idempotent ?? true;
     const url = new URL(path.replace(/^\/+/, ""), this.baseUrl);
 
     if (options.params) {
@@ -141,6 +155,9 @@ export class HttpClient {
       } catch (error) {
         if (error instanceof RateLimitError || error instanceof ServerError) {
           lastError = error;
+          if (error instanceof ServerError && !idempotent) {
+            throw error;
+          }
           if (attempt < this.maxRetries - 1) {
             let wait = RETRY_BACKOFF * 2 ** attempt;
             if (error instanceof RateLimitError && error.retryAfter) {
@@ -162,7 +179,7 @@ export class HttpClient {
               ? `Request timed out after ${this.timeout}ms`
               : `Connection error: ${(error as Error).message}`;
           lastError = new HandwryttenError(msg);
-          if (attempt < this.maxRetries - 1) {
+          if (idempotent && attempt < this.maxRetries - 1) {
             await sleep(RETRY_BACKOFF * 2 ** attempt);
           } else {
             throw lastError;

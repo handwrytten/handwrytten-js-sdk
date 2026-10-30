@@ -13,7 +13,7 @@ export type { AddRecipientOptions, AddSenderOptions, UpdateRecipientOptions } fr
 export { BasketResource } from "./basket.js";
 export type { AddOrderOptions, SendBasketOptions } from "./basket.js";
 export { OrdersResource } from "./orders.js";
-export type { RecipientInput, SenderInput, SendOrderOptions } from "./orders.js";
+export type { RecipientInput, SenderInput, SendOrderOptions, SendSingleOrderOptions } from "./orders.js";
 export { ProspectingResource } from "./prospecting.js";
 export type { CalculateTargetsOptions } from "./prospecting.js";
 export { ShippingResource } from "./shipping.js";
