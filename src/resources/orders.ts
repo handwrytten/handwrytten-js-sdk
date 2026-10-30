@@ -365,10 +365,14 @@ export class OrdersResource {
     return (await this.http.postNonIdempotent("orders/singleStepOrder", body)) as ApiRecord;
   }
 
-  /** Retrieve an order by ID. */
-  async get(orderId: string): Promise<Order> {
-    const data = await this.http.get(`orders/get/${orderId}`);
-    return parseOrder(isRecord(data) ? data : {});
+  /**
+   * Retrieve an order by ID (`orders/details`). The full API order —
+   * `card_name`, `address_from`, `price`, `childs`, etc. — is in `raw`.
+   */
+  async get(orderId: string | number): Promise<Order> {
+    const data = await this.http.get("orders/details", { id: orderId });
+    const order = isRecord(data) ? data.order : undefined;
+    return parseOrder(isRecord(order) ? order : {});
   }
 
   /** List orders with pagination. */
