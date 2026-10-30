@@ -737,12 +737,15 @@ describe("OrdersResource", () => {
     expect(addrs[1].message).toBe("Default"); // gets default
   });
 
-  it("get returns an Order", async () => {
-    const { client, calls } = makeClient([{ body: { id: 999, status: "pending" } }]);
-    const order = await client.orders.get("999");
+  it("get reads orders/details and unwraps the order", async () => {
+    const { client, calls } = makeClient([{
+      body: { httpCode: 200, status: "ok", order: { id: 999, status: "suspended", card_name: "Thanks", price: 7 } },
+    }]);
+    const order = await client.orders.get(999);
     expect(order.id).toBe("999");
-    expect(order.status).toBe("pending");
-    expect(calls[0].url).toContain("orders/get/999");
+    expect(order.status).toBe("suspended");
+    expect(order.raw.card_name).toBe("Thanks");
+    expect(calls[0].url).toContain("orders/details?id=999");
   });
 
   it("list returns Order[]", async () => {

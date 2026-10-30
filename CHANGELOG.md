@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.1] - 2026-10-30
+
+### Fixed
+
+- `client.orders.get()` called `orders/get/{id}`, which does not exist. It now calls `GET orders/details?id=` and returns the order from its `order` envelope; the full API order (`card_name`, `address_from`, `price`, `childs`, etc.) is in `raw`. It also accepts a numeric ID, such as the `order_id` from `sendSingle()`.
+
 ## [1.9.0] - 2026-10-30
 
 ### Added
