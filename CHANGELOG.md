@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-10-30
+
+### Added
+
+- `client.orders.sendSingle()` creates and pays for one order in a single call (`POST orders/singleStepOrder`) without using the account's shared basket. It takes `fontLabel` (the font's `label`) and one inline recipient.
+- `HttpClient.postNonIdempotent()` for POSTs that must not be repeated.
+
+### Changed
+
+- **Order-creating calls are no longer retried after an ambiguous failure.** `orders.send()`, `orders.sendSingle()`, `basket.addOrder()` and `basket.send()` now throw on the first 5xx, timeout or network error instead of retrying up to `maxRetries` times. The server may already have created or paid the order, and a retry could mail a duplicate card. A 429 is still retried. Other requests are unchanged.
+
 ## [1.8.0] - 2026-10-27
 
 ### Added

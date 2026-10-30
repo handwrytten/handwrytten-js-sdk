@@ -191,6 +191,37 @@ describe("Retries", () => {
     expect(mock.calls.length).toBe(2);
   });
 
+  it("postNonIdempotent does not retry on 500", async () => {
+    const mock = createMockFetch([
+      { status: 500, body: {} },
+      { status: 200, body: { ok: true } },
+    ]);
+    const client = new HttpClient({ apiKey: "k", fetch: mock.fetch, maxRetries: 3 });
+    await expect(client.postNonIdempotent("orders/placeBasket", {})).rejects.toThrow(ServerError);
+    expect(mock.calls.length).toBe(1);
+  });
+
+  it("postNonIdempotent does not retry on timeout", async () => {
+    let calls = 0;
+    const fetch: typeof globalThis.fetch = async () => {
+      calls++;
+      throw new DOMException("aborted", "AbortError");
+    };
+    const client = new HttpClient({ apiKey: "k", fetch, maxRetries: 3 });
+    await expect(client.postNonIdempotent("orders/placeBasket", {})).rejects.toThrow(/timed out/);
+    expect(calls).toBe(1);
+  });
+
+  it("postNonIdempotent retries on 429", async () => {
+    const mock = createMockFetch([
+      { status: 429, body: {} },
+      { status: 200, body: { ok: true } },
+    ]);
+    const client = new HttpClient({ apiKey: "k", fetch: mock.fetch, maxRetries: 2 });
+    expect(await client.postNonIdempotent("orders/placeBasket", {})).toEqual({ ok: true });
+    expect(mock.calls.length).toBe(2);
+  });
+
   it("does not retry on 400", async () => {
     const mock = createMockFetch([
       { status: 400, body: { message: "bad" } },

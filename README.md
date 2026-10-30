@@ -73,6 +73,28 @@ const result = await client.orders.send({
 });
 ```
 
+### Send One Order Without the Basket
+
+`orders.send()` adds to your account's basket and then sends the whole basket, so concurrent calls can send each other's orders. `orders.sendSingle()` creates and pays for exactly one order in one call (`orders/singleStepOrder`) and never touches the basket. Use it when sending from parallel jobs or automations. It takes the font's `label`, not its `id`, and one inline recipient. Always pass `sender`: it does not fall back to your account's default return address, so the order is rejected without one (the only exception is a team member whose team enforces a return address).
+
+```typescript
+const result = await client.orders.sendSingle({
+  cardId: "12345",
+  fontLabel: "Casual David",
+  message: "Thank you for your business!",
+  sender: 4567, // saved return address ID, or an address object
+  recipient: {
+    firstName: "Jane",
+    lastName: "Doe",
+    street1: "123 Main St",
+    city: "Phoenix",
+    state: "AZ",
+    zip: "85001",
+  },
+});
+console.log(result.order_id);
+```
+
 ### Send Bulk — Multiple Recipients with Per-Recipient Overrides
 
 Each recipient can have its own `message`, `wishes`, and `sender`. Top-level values serve as defaults for any recipient that doesn't specify its own.
@@ -533,7 +555,7 @@ try {
 | `client.bundles` | `list()` |
 | `client.qrCodes` | `list()`, `create()`, `delete()`, `frames()` |
 | `client.addressBook` | `listRecipients()`, `addRecipient()`, `updateRecipient()`, `deleteRecipient()`, `listSenders()`, `addSender()`, `deleteSender()`, `countries()`, `states(country)` |
-| `client.orders` | `send()`, `get(id)`, `list()`, `listPastBaskets()` |
+| `client.orders` | `send()`, `sendSingle()`, `get(id)`, `list()`, `listPastBaskets()` |
 | `client.basket` | `addOrder()`, `send()`, `remove(basketId)`, `clear()`, `list()`, `getItem(basketId)`, `count()` |
 | `client.prospecting` | `calculateTargets({ zipCode, radiusMiles })` |
 | `client.shipping` | `stampOptions()` |
@@ -575,6 +597,8 @@ const client = new Handwrytten({
   maxRetries: 5,            // automatic retries with exponential backoff
 });
 ```
+
+Calls that create orders (`orders.send()`, `orders.sendSingle()`, `basket.addOrder()`, `basket.send()`) are retried only on 429. A 5xx, timeout or network error may arrive after the order was already created, so it is thrown instead of retried. Check `client.orders.list()` before sending again.
 
 You can also inject a custom `fetch` implementation:
 

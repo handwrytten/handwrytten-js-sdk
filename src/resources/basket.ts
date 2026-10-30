@@ -178,7 +178,7 @@ export class BasketResource {
 
     Object.assign(body, extra);
 
-    return (await this.http.post("orders/placeBasket", body)) as ApiRecord;
+    return (await this.http.postNonIdempotent("orders/placeBasket", body)) as ApiRecord;
   }
 
   /** Remove a single item from the basket. */
@@ -231,7 +231,7 @@ export class BasketResource {
     if (priceStructure != null) body.price_structure = priceStructure;
     Object.assign(body, extra);
 
-    return (await this.http.post("basket/send", body)) as ApiRecord;
+    return (await this.http.postNonIdempotent("basket/send", body)) as ApiRecord;
   }
 }
 
